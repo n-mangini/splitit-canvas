@@ -25,6 +25,13 @@ export type Screen = {
 
 export const screens: Screen[] = [
   {
+    // La landing es la home del front, pero en el prototipo `/` abre el canvas.
+    route: '/inicio',
+    title: 'Landing',
+    epic: 'Acceso',
+    stories: [{ id: 'SPLT-018', title: 'Landing page', issue: 18 }],
+  },
+  {
     route: '/register',
     title: 'Registrarse',
     epic: 'Acceso',
