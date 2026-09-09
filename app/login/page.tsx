@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthHeading, AuthSplitLayout } from '@/components/auth-split-layout'
+import { AuthDivider, GoogleAuthButton } from '@/components/google-auth-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,7 +25,19 @@ function LoginContent() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogle = async () => {
+    setError('')
+    setIsGoogleLoading(true)
+
+    // Simulate the round trip through Google
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    const redirect = searchParams.get('redirect')
+    router.push(redirect ?? '/events')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,12 +107,21 @@ function LoginContent() {
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
             className={cn(primaryButtonClass, 'w-full')}
           >
             {isLoading ? <Spinner className="h-4 w-4" /> : 'Ingresar'}
           </Button>
         </form>
+
+        <div className="flex flex-col gap-[10px]">
+          <AuthDivider />
+          <GoogleAuthButton
+            onClick={handleGoogle}
+            isLoading={isGoogleLoading}
+            disabled={isLoading}
+          />
+        </div>
 
         <p className="text-center text-sm text-[#868992]">
           ¿No tenés cuenta?{' '}

@@ -28,13 +28,19 @@ export const screens: Screen[] = [
     route: '/register',
     title: 'Registrarse',
     epic: 'Acceso',
-    stories: [{ id: 'SPLT-001', title: 'Registrarse', issue: 1 }],
+    stories: [
+      { id: 'SPLT-001', title: 'Registrarse', issue: 1 },
+      { id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 },
+    ],
   },
   {
     route: '/login',
     title: 'Iniciar sesión',
     epic: 'Acceso',
-    stories: [{ id: 'SPLT-002', title: 'Iniciar sesión', issue: 2 }],
+    stories: [
+      { id: 'SPLT-002', title: 'Iniciar sesión', issue: 2 },
+      { id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 },
+    ],
   },
   {
     route: '/profile',
