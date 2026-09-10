@@ -23,7 +23,7 @@ export const metadata: Metadata = {
  */
 export default function LandingPage() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#fcfcfe]">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-card">
       <LandingBackground />
 
       {/* Barra de landing, no la del AppShell: una sola seccion no tiene que
@@ -34,7 +34,7 @@ export default function LandingPage() {
           <Link
             href="/inicio"
             aria-label="SplitIt"
-            className="flex h-full items-center rounded-[24px] border border-[#edf0f8] bg-[#fefefe] px-4 py-[11px]"
+            className="flex h-full items-center rounded-[24px] border border-border bg-card px-4 py-[11px]"
           >
             <Logo />
           </Link>
@@ -55,7 +55,7 @@ export default function LandingPage() {
             {/* En desktop el titular entra en un renglon; el ancho de mobile
                 esta para que corte en "Comparti el link / y listo." y no deje
                 la "y" colgando arriba. */}
-            <h1 className="max-w-[295px] text-[36px] font-extrabold leading-[1.15] text-[#001625] lg:max-w-[700px] lg:text-[60px]">
+            <h1 className="max-w-[295px] text-[36px] font-extrabold leading-[1.15] text-foreground lg:max-w-[700px] lg:text-[60px]">
               Compartí el link y listo.
             </h1>
 

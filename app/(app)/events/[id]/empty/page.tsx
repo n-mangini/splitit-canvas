@@ -1,7 +1,0 @@
-import { EventDetailScreen } from '@/components/event-detail-screen'
-
-export default async function EmptyEventDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-
-  return <EventDetailScreen eventId={id} empty />
-}

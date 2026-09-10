@@ -17,10 +17,10 @@ export function LandingBalanceCard() {
     .sort((a, b) => b.netBalance - a.netBalance)
 
   return (
-    <div className="w-full max-w-[380px] shrink-0 rounded-[24px] border border-[#e8ecf2] bg-white p-5 shadow-[0_18px_50px_rgba(7,27,58,0.12)]">
+    <div className="w-full max-w-[380px] shrink-0 rounded-[24px] border border-border bg-white p-5 shadow-[0_18px_50px_rgba(7,27,58,0.12)]">
       <div className="mb-4">
-        <p className="text-[15px] font-black text-[#071b3a]">Saldo por integrante</p>
-        <p className="text-[12px] text-[#7b8494]">{event.name}</p>
+        <p className="text-[15px] font-black text-foreground">Saldo por integrante</p>
+        <p className="text-[12px] text-muted-foreground">{event.name}</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -30,19 +30,19 @@ export function LandingBalanceCard() {
 
           return (
             <div key={balance.participantId} className="flex items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eef3f8] text-[12px] font-black text-[#071b3a]">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-[12px] font-black text-foreground">
                 {getInitials(balance.participantName)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-black text-[#071b3a]">
+                <p className="truncate text-[13px] font-black text-foreground">
                   {balance.participantName}
                 </p>
                 <span
                   className={cn(
                     'mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black',
-                    status === 'recibe' && 'bg-[#e8faf5] text-[#21b894]',
-                    status === 'debe' && 'bg-[#f0e9ff] text-[#8b5cf6]',
-                    status === 'en cero' && 'bg-[#eef3f8] text-[#7b8494]',
+                    status === 'recibe' && 'bg-soft-primary text-primary',
+                    status === 'debe' && 'bg-soft-secondary text-secondary',
+                    status === 'en cero' && 'bg-muted text-muted-foreground',
                   )}
                 >
                   {status}
@@ -51,9 +51,9 @@ export function LandingBalanceCard() {
               <p
                 className={cn(
                   'shrink-0 text-[13px] font-black',
-                  balance.netBalance > 0 && 'text-[#21b894]',
-                  balance.netBalance < 0 && 'text-[#8b5cf6]',
-                  balance.netBalance === 0 && 'text-[#071b3a]',
+                  balance.netBalance > 0 && 'text-primary',
+                  balance.netBalance < 0 && 'text-secondary',
+                  balance.netBalance === 0 && 'text-foreground',
                 )}
               >
                 {balance.netBalance > 0 ? '+' : ''}

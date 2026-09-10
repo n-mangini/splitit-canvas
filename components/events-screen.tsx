@@ -6,75 +6,29 @@ import { Plus, Search, SearchX, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
-import { getEventIcon } from '@/lib/event-icons'
+import { EmptyState } from '@/components/empty-state'
+import { EventBadge } from '@/components/event-badge'
 import { cn } from '@/lib/utils'
 import type { Event } from '@/lib/types'
 
-function Logo() {
-  return (
-    <Link href="/events" className="flex items-center gap-2">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-lg font-black text-primary-foreground">
-        S
-      </div>
-      <span className="text-2xl font-black tracking-normal text-foreground">SplitIt</span>
-    </Link>
-  )
-}
-
 function EventCard({ event }: { event: Event }) {
-  const { Icon } = getEventIcon(event.icon)
-
   return (
     <Link
       href={`/events/${event.id}`}
       className="splitit-card flex items-center gap-4 p-4 transition-colors hover:border-primary/40 sm:p-5"
     >
-      <div
-        aria-hidden
-        className="flex size-14 shrink-0 items-center justify-center rounded-[16px] bg-[#effaf6] text-primary"
-      >
-        <Icon className="size-6" />
-      </div>
+      <EventBadge icon={event.icon} />
 
       <div className="min-w-0 flex-1">
-        <h2 className="truncate text-base font-extrabold text-[#001625]">{event.name}</h2>
+        <h2 className="truncate text-base font-extrabold text-foreground">{event.name}</h2>
         {/* La descripcion es opcional (SPLT-005 #5): sin ella no se reserva el
             renglon, para no dejar un hueco sin explicacion. */}
         {event.description && (
-          <p className="mt-1 line-clamp-2 text-sm font-medium text-[#868992]">{event.description}</p>
+          <p className="mt-1 line-clamp-2 text-sm font-medium text-muted-foreground">{event.description}</p>
         )}
         <p className="mt-2 text-sm font-medium text-primary">{event.participants.length} integrantes</p>
       </div>
     </Link>
-  )
-}
-
-function EmptyEventsCard() {
-  return (
-    <section className="splitit-card p-6 sm:p-8">
-      <div className="mx-auto max-w-sm text-center">
-        <h2 className="text-2xl font-extrabold text-[#001625]">Todavia no tenes eventos</h2>
-        <p className="mt-2 text-sm font-medium text-[#868992]">
-          Crea tu primer evento para empezar a dividir gastos con tu grupo.
-        </p>
-      </div>
-    </section>
-  )
-}
-
-function NoMatchesCard({ query }: { query: string }) {
-  return (
-    <section className="splitit-card p-6 sm:p-8">
-      <div className="mx-auto max-w-sm text-center">
-        <span className="mx-auto mb-3 flex size-12 items-center justify-center rounded-[16px] bg-[#f1f5f9] text-[#868992]">
-          <SearchX className="size-6" />
-        </span>
-        <h2 className="text-2xl font-extrabold text-[#001625]">Sin resultados</h2>
-        <p className="mt-2 text-sm font-medium text-[#868992]">
-          Ningun evento tuyo coincide con &laquo;{query}&raquo;.
-        </p>
-      </div>
-    </section>
   )
 }
 
@@ -89,15 +43,11 @@ export function EventsScreen({ events }: { events: Event[] }) {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      <header className="flex items-center justify-between lg:hidden">
-        <Logo />
-      </header>
-
       <header>
-        <h1 className="text-[40px] font-extrabold leading-[1.15] text-[#001625] sm:text-[60px]">
+        <h1 className="text-[40px] font-extrabold leading-[1.15] text-foreground sm:text-[60px]">
           Tus eventos
         </h1>
-        <p className="mt-2 max-w-xl text-sm font-medium text-[#868992]">
+        <p className="mt-2 max-w-xl text-sm font-medium text-muted-foreground">
           {hasEvents
             ? 'Selecciona un evento creado para cargar gastos, revisar saldos y ver quien le debe a quien.'
             : 'Cuando tengas eventos creados, los vas a ver aca para cargar gastos y revisar saldos.'}
@@ -114,7 +64,7 @@ export function EventsScreen({ events }: { events: Event[] }) {
       <section className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
         {hasEvents && (
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#94a3b8]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-placeholder" />
             <Input
               placeholder="Buscar evento"
               value={query}
@@ -126,7 +76,7 @@ export function EventsScreen({ events }: { events: Event[] }) {
                 type="button"
                 onClick={() => setQuery('')}
                 aria-label="Limpiar busqueda"
-                className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-[6px] text-[#868992] transition-colors hover:bg-[#f1f5f9] hover:text-[#001625]"
+                className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
@@ -142,9 +92,20 @@ export function EventsScreen({ events }: { events: Event[] }) {
         </Link>
       </section>
 
-      {!hasEvents && <EmptyEventsCard />}
+      {!hasEvents && (
+        <EmptyState
+          title="Todavia no tenes eventos"
+          description="Crea tu primer evento para empezar a dividir gastos con tu grupo."
+        />
+      )}
 
-      {hasEvents && matches.length === 0 && <NoMatchesCard query={query.trim()} />}
+      {hasEvents && matches.length === 0 && (
+        <EmptyState
+          icon={SearchX}
+          title="Sin resultados"
+          description={<>Ningun evento tuyo coincide con &laquo;{query.trim()}&raquo;.</>}
+        />
+      )}
 
       {hasEvents && matches.length > 0 && (
         <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

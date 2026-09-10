@@ -88,11 +88,41 @@ export const screens: Screen[] = [
     title: 'Detalle de evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
+  },
+  {
+    route: '/events/event-1/edit',
+    title: 'Editar evento',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-020', title: 'Editar evento', issue: 20 }],
+  },
+  {
+    route: '/events/event-1/delete',
+    title: 'Eliminar evento',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-021', title: 'Eliminar evento', issue: 21 }],
+  },
+  {
+    // La pantalla completa, con gastos y saldos. Su contenido es de historias
+    // que todavia no se entregaron, asi que no esta en el canvas: queda
+    // parqueada bajo ellas y se muestra cuando les toque. Es la misma pantalla
+    // que /events/event-1 con el alcance completo, no una copia.
+    route: '/events/event-1/completo',
+    title: 'Detalle de evento · completo',
+    epic: 'Eventos',
+    stories: [
+      { id: 'SPLT-011', title: 'Registrar gasto', issue: 11 },
+      { id: 'SPLT-012', title: 'Consultar gastos del evento', issue: 12 },
+      { id: 'SPLT-015', title: 'Consultar saldo por integrante', issue: 15 },
+      { id: 'SPLT-016', title: 'Consultar pagos sugeridos', issue: 16 },
+    ],
     hidden: true,
   },
   {
-    route: '/events/event-1/empty',
-    title: 'Detalle de evento · vacío',
+    // Cualquier evento que el usuario no pueda abrir cae aca: no existe, o no
+    // es suyo. Comparten pantalla a proposito. El id de la ruta se ve en la
+    // barra del navegador, asi que se eligio uno que se lea.
+    route: '/events/evento-inexistente',
+    title: 'Detalle de evento · sin acceso',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
     hidden: true,

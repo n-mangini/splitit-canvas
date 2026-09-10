@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select'
 import { UserRoundCheck, Users } from 'lucide-react'
 import { mockEvents } from '@/lib/mock-data'
-import { getEventIcon } from '@/lib/event-icons'
+import { EventBadge } from '@/components/event-badge'
 
 type StoredClaim = {
   eventId: string
@@ -140,8 +140,6 @@ export function JoinEventClient({
     )
   }
 
-  const { Icon: EventIconComponent } = getEventIcon(event.icon)
-
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border p-4">
@@ -157,9 +155,7 @@ export function JoinEventClient({
         <div className="w-full max-w-md">
           <Card className="border-border bg-card">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#EAF4FF] text-[#2D9CDB]">
-                <EventIconComponent className="h-8 w-8" />
-              </div>
+              <EventBadge icon={event.icon} size="lg" className="mx-auto mb-4" />
               <CardTitle className="text-2xl text-foreground">{event.name}</CardTitle>
               <CardDescription>
                 {event.description || 'Te invitaron a dividir gastos'}

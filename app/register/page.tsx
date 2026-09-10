@@ -61,7 +61,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="name" className="text-sm font-medium text-[#0f172a]">
+            <Label htmlFor="name" className="text-sm font-medium text-foreground">
               Nombre
             </Label>
             <Input
@@ -76,7 +76,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="email" className="text-sm font-medium text-[#0f172a]">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">
               Email
             </Label>
             <Input
@@ -91,7 +91,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="password" className="text-sm font-medium text-[#0f172a]">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
               Contraseña
             </Label>
             <div className="relative">
@@ -107,7 +107,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -125,7 +125,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="text-center text-sm text-[#868992]">
+        <p className="text-center text-sm text-muted-foreground">
           ¿Ya tenés cuenta?{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
             Iniciá sesión
