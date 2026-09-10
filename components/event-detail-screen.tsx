@@ -754,7 +754,15 @@ function EventDetail({
       )}
 
       {activeTab === 'balances' && (
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <section
+          className={cn(
+            'grid gap-5 lg:items-start',
+            // La segunda columna es la del saldo por integrante. Sin ella la
+            // seccion es de una sola columna: si no, el ancho queda reservado
+            // igual y la tarjeta se ve cortada al medio en desktop.
+            full && 'lg:grid-cols-[minmax(0,1fr)_380px]'
+          )}
+        >
           <div className="min-w-0 space-y-5">
             <div className="min-w-0">
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Saldos</h2>
