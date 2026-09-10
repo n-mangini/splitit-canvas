@@ -21,9 +21,28 @@ export type Screen = {
   stories: Story[]
   /** Fuera del canvas por ahora: la pantalla existe pero no se muestra. */
   hidden?: boolean
+  /**
+   * Arte propio de la pantalla, servido desde `public/`. Va solo lo que el dev
+   * no puede obtener de otro lado: ilustraciones y fondos dibujados para el
+   * producto. Los iconos no, que salen de un paquete que ya tienen instalado,
+   * ni los tokens, que se leen inspeccionando.
+   */
+  assets?: string[]
 }
 
 export const screens: Screen[] = [
+  {
+    // La landing es la home del front, pero en el prototipo `/` abre el canvas.
+    route: '/inicio',
+    title: 'Landing',
+    epic: 'Acceso',
+    stories: [{ id: 'SPLT-018', title: 'Landing page', issue: 18 }],
+    assets: [
+      '/landing/fondo-desktop.svg',
+      '/landing/fondo-mobile.svg',
+      '/landing/saldo-por-integrante.png',
+    ],
+  },
   {
     route: '/register',
     title: 'Registrarse',
@@ -110,6 +129,11 @@ export const allStories: Story[] = [
     visibleScreens.flatMap((screen) => screen.stories).map((story) => [story.id, story])
   ).values(),
 ].sort((a, b) => a.id.localeCompare(b.id))
+
+/** Arte de todas las pantallas de una historia, sin repetidos. */
+export function assetsOfStory(storyId: string): string[] {
+  return [...new Set(screensOfStory(storyId).flatMap((screen) => screen.assets ?? []))]
+}
 
 export function issueUrl(issue: number): string {
   return `${ISSUES_BASE}/${issue}`

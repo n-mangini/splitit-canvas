@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AlignJustify, LayoutGrid, UserRound } from 'lucide-react'
+import { Logo } from '@/components/logo'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,18 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-
-function Logo() {
-  return (
-    <div className="relative h-[34px] w-[74px]">
-      <div className="absolute left-0 top-0 h-[34px] w-[57px] rounded-[8px] bg-primary" />
-      <div className="absolute left-[calc(50%+1px)] top-[3px] flex -translate-x-1/2 items-center justify-center whitespace-nowrap text-[24px] font-extrabold leading-[1.15]">
-        <span className="text-[#fcfcfe]">Split</span>
-        <span className="text-black">It</span>
-      </div>
-    </div>
-  )
-}
 
 function NavBar() {
   const pathname = usePathname()
