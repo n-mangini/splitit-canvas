@@ -69,11 +69,20 @@ export const screens: Screen[] = [
     title: 'Detalle de evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
-    hidden: true,
   },
   {
     route: '/events/event-1/empty',
-    title: 'Detalle de evento · vacío',
+    title: 'Detalle de evento · sin gastos',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
+    hidden: true,
+  },
+  {
+    // Cualquier evento que el usuario no pueda abrir cae aca: no existe, o no
+    // es suyo. Comparten pantalla a proposito. El id de la ruta se ve en la
+    // barra del navegador, asi que se eligio uno que se lea.
+    route: '/events/evento-inexistente',
+    title: 'Detalle de evento · sin acceso',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
     hidden: true,

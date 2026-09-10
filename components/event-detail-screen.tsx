@@ -12,6 +12,7 @@ import {
   Plus,
   WandSparkles,
   ReceiptText,
+  SearchX,
   Share2,
   Trash2,
   UsersRound,
@@ -39,6 +40,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { primaryButtonClass } from '@/lib/form-styles'
 import { cn } from '@/lib/utils'
 import {
   calculateBalances,
@@ -294,8 +296,51 @@ function MemberBalanceRow({ name, amount, currency }: { name: string; amount: nu
   )
 }
 
+/*
+  Un evento que el usuario no puede abrir: no existe (SPLT-007 #13) o no es
+  suyo (SPLT-007 #12). Los dos criterios comparten pantalla a proposito — asi
+  nadie con un link ajeno puede confirmar que ese evento existe.
+
+  Antes esta pantalla caia en el primer evento del mock, asi que un link roto
+  se veia igual que uno bueno. El estado tiene salida propia: sin volver a
+  "Tus eventos" se queda sin nada para hacer.
+*/
+function MissingEventCard() {
+  return (
+    <section className="splitit-card p-6 sm:p-8">
+      <div className="mx-auto max-w-sm text-center">
+        <span className="mx-auto mb-3 flex size-12 items-center justify-center rounded-[16px] bg-[#f1f5f9] text-[#868992]">
+          <SearchX className="size-6" />
+        </span>
+        <h2 className="text-2xl font-extrabold text-[#001625]">No encontramos este evento</h2>
+        <p className="mt-2 text-sm font-medium text-[#868992]">
+          Puede que lo hayan eliminado, que el link este incompleto, o que no estes invitado.
+          Revisa el link con quien te lo compartio.
+        </p>
+        <Link href="/events" className="mt-5 inline-block">
+          <Button className={cn(primaryButtonClass, 'px-5')}>Ir a mis eventos</Button>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 export function EventDetailScreen({ eventId, empty = false, initialTab = 'expenses' }: { eventId: string; empty?: boolean; initialTab?: TabValue }) {
-  const event = mockEvents.find((item) => item.id === eventId) ?? mockEvents[0]
+  const event = mockEvents.find((item) => item.id === eventId)
+  if (!event) return <MissingEventCard />
+
+  return <EventDetail event={event} empty={empty} initialTab={initialTab} />
+}
+
+function EventDetail({
+  event,
+  empty,
+  initialTab,
+}: {
+  event: Event
+  empty: boolean
+  initialTab: TabValue
+}) {
   const [expenses, setExpenses] = useState<Expense[]>(empty ? [] : event.expenses)
   const [participants, setParticipants] = useState<Event['participants']>(event.participants)
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab)
