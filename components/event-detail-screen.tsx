@@ -325,21 +325,46 @@ function MissingEventCard() {
   )
 }
 
-export function EventDetailScreen({ eventId, empty = false, initialTab = 'expenses' }: { eventId: string; empty?: boolean; initialTab?: TabValue }) {
+/**
+ * `full` es el alcance de la pantalla.
+ *
+ * Apagado, se ve lo que entrega SPLT-007: el encabezado del evento, la
+ * navegacion entre las tres secciones, y la lista de integrantes. Las
+ * secciones Gastos y Saldos quedan con su titulo y nada mas — su contenido
+ * es de otras historias (SPLT-011/012 y SPLT-015/016) y todavia no se
+ * entrego.
+ *
+ * Encendido, se ve la pantalla completa. Vive en una ruta que el canvas no
+ * muestra, para no perderla mientras esas historias no llegan. Es la misma
+ * pantalla, no una copia: no se pueden desincronizar.
+ */
+export function EventDetailScreen({
+  eventId,
+  empty = false,
+  initialTab = 'expenses',
+  full = false,
+}: {
+  eventId: string
+  empty?: boolean
+  initialTab?: TabValue
+  full?: boolean
+}) {
   const event = mockEvents.find((item) => item.id === eventId)
   if (!event) return <MissingEventCard />
 
-  return <EventDetail event={event} empty={empty} initialTab={initialTab} />
+  return <EventDetail event={event} empty={empty} initialTab={initialTab} full={full} />
 }
 
 function EventDetail({
   event,
   empty,
   initialTab,
+  full,
 }: {
   event: Event
   empty: boolean
   initialTab: TabValue
+  full: boolean
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(empty ? [] : event.expenses)
   const [participants, setParticipants] = useState<Event['participants']>(event.participants)
@@ -538,34 +563,37 @@ function EventDetail({
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
-          <div className="flex items-center gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="h-11 rounded-[18px] bg-primary px-4 font-black text-primary-foreground hover:bg-primary/90">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Invitar
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-[24px]">
-                <DialogHeader>
-                  <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-[18px] bg-primary/10">
-                    <WandSparkles className="h-7 w-7 text-primary" />
-                  </div>
-                  <DialogTitle className="text-center">Magic link</DialogTitle>
-                  <DialogDescription className="text-center">
-                    Comparte el link y cualquiera puede unirse al evento.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Input readOnly value={inviteLink} className="rounded-[18px]" />
-                  <Button onClick={handleCopyLink} className="w-full rounded-[18px]">
-                    {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
-                    {copied ? 'Copiado' : 'Copiar link'}
+          {/* Invitar es SPLT-008, no esta historia. */}
+          {full && (
+            <div className="flex items-center gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="h-11 rounded-[18px] bg-primary px-4 font-black text-primary-foreground hover:bg-primary/90">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Invitar
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                </DialogTrigger>
+                <DialogContent className="rounded-[24px]">
+                  <DialogHeader>
+                    <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-[18px] bg-primary/10">
+                      <WandSparkles className="h-7 w-7 text-primary" />
+                    </div>
+                    <DialogTitle className="text-center">Magic link</DialogTitle>
+                    <DialogDescription className="text-center">
+                      Comparte el link y cualquiera puede unirse al evento.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input readOnly value={inviteLink} className="rounded-[18px]" />
+                    <Button onClick={handleCopyLink} className="w-full rounded-[18px]">
+                      {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
+                      {copied ? 'Copiado' : 'Copiar link'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4 lg:items-end lg:justify-between">
@@ -598,165 +626,170 @@ function EventDetail({
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Gastos</h2>
             </div>
 
-            {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
-                lugar al unico mensaje que importa ahi: que todavia no hay
-                nada cargado. Aparece recien con el primer gasto. */}
-            {expenses.length > 0 && (
-              <article className="splitit-card p-4">
-                <p className="text-xs font-bold text-muted-foreground">Total de gastos</p>
-                <p className="mt-1 text-2xl font-black text-foreground">
-                  {formatCurrency(totalExpenses, event.currency)}
-                </p>
-              </article>
-            )}
+            {/* El contenido de Gastos es SPLT-011 (agregar) y SPLT-012 (consultar). */}
+            {full && (
+              <>
+              {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
+                  lugar al unico mensaje que importa ahi: que todavia no hay
+                  nada cargado. Aparece recien con el primer gasto. */}
+              {expenses.length > 0 && (
+                <article className="splitit-card p-4">
+                  <p className="text-xs font-bold text-muted-foreground">Total de gastos</p>
+                  <p className="mt-1 text-2xl font-black text-foreground">
+                    {formatCurrency(totalExpenses, event.currency)}
+                  </p>
+                </article>
+              )}
 
-            <div className="grid gap-3 md:grid-cols-[220px]">
-              <Dialog
-                open={isAddExpenseOpen}
-                onOpenChange={(open) => {
-                  setIsAddExpenseOpen(open)
-                  if (!open) resetExpenseForm()
-                }}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    className="h-14 w-full rounded-[18px] bg-primary text-base font-black text-primary-foreground hover:bg-primary/90"
-                    onClick={resetExpenseForm}
-                  >
-                    <Plus className="mr-2 h-5 w-5" />
-                    Agregar gasto
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[24px]">
-                  <DialogHeader>
-                    <DialogTitle>Agregar gasto</DialogTitle>
-                    <DialogDescription>Carga quien pago y el monto.</DialogDescription>
-                  </DialogHeader>
+              <div className="grid gap-3 md:grid-cols-[220px]">
+                <Dialog
+                  open={isAddExpenseOpen}
+                  onOpenChange={(open) => {
+                    setIsAddExpenseOpen(open)
+                    if (!open) resetExpenseForm()
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      className="h-14 w-full rounded-[18px] bg-primary text-base font-black text-primary-foreground hover:bg-primary/90"
+                      onClick={resetExpenseForm}
+                    >
+                      <Plus className="mr-2 h-5 w-5" />
+                      Agregar gasto
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[24px]">
+                    <DialogHeader>
+                      <DialogTitle>Agregar gasto</DialogTitle>
+                      <DialogDescription>Carga quien pago y el monto.</DialogDescription>
+                    </DialogHeader>
 
-                  <form onSubmit={handleAddExpense} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="expense-name">Nombre</Label>
-                      <Input
-                        id="expense-name"
-                        value={expenseName}
-                        onChange={(item) => setExpenseName(item.target.value)}
-                        placeholder="Ej: Supermercado"
-                        className="rounded-[18px]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-[1fr_auto] gap-3">
+                    <form onSubmit={handleAddExpense} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="expense-amount">Monto</Label>
+                        <Label htmlFor="expense-name">Nombre</Label>
                         <Input
-                          id="expense-amount"
-                          inputMode="decimal"
-                          value={expenseAmount}
-                          onChange={(item) => setExpenseAmount(item.target.value)}
-                          placeholder="0"
+                          id="expense-name"
+                          value={expenseName}
+                          onChange={(item) => setExpenseName(item.target.value)}
+                          placeholder="Ej: Supermercado"
                           className="rounded-[18px]"
                         />
                       </div>
+
+                      <div className="grid grid-cols-[1fr_auto] gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="expense-amount">Monto</Label>
+                          <Input
+                            id="expense-amount"
+                            inputMode="decimal"
+                            value={expenseAmount}
+                            onChange={(item) => setExpenseAmount(item.target.value)}
+                            placeholder="0"
+                            className="rounded-[18px]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Moneda</Label>
+                          <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
+                            <SelectTrigger className="h-10 w-[110px] rounded-[18px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {supportedCurrencies.map((code) => (
+                                <SelectItem key={code} value={code}>
+                                  {code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {needsConversion && (
+                        <div className="rounded-[16px] border border-border bg-background px-3 py-2 text-xs font-semibold">
+                          {ratesLoading && (
+                            <span className="text-muted-foreground">Obteniendo tipo de cambio...</span>
+                          )}
+                          {!ratesLoading && ratesError && (
+                            <span className="text-destructive">{ratesError}</span>
+                          )}
+                          {!ratesLoading && !ratesError && conversionRate && (
+                            <div className="flex flex-col gap-0.5 text-muted-foreground">
+                              <span>
+                                1 {expenseCurrency} = {conversionRate.toLocaleString('es-AR', { maximumFractionDigits: 4 })} {event.currency}
+                              </span>
+                              {convertedAmount !== null && (
+                                <span className="text-foreground">
+                                  Se guardara como {formatCurrency(convertedAmount, event.currency)}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="space-y-2">
-                        <Label>Moneda</Label>
-                        <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
-                          <SelectTrigger className="h-10 w-[110px] rounded-[18px]">
+                        <Label>Pago</Label>
+                        <Select value={expensePaidBy} onValueChange={setExpensePaidBy}>
+                          <SelectTrigger className="h-11 rounded-[18px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {supportedCurrencies.map((code) => (
-                              <SelectItem key={code} value={code}>
-                                {code}
+                            {participants.map((participant) => (
+                              <SelectItem key={participant.id} value={participant.id}>
+                                {participant.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
 
-                    {needsConversion && (
-                      <div className="rounded-[16px] border border-border bg-background px-3 py-2 text-xs font-semibold">
-                        {ratesLoading && (
-                          <span className="text-muted-foreground">Obteniendo tipo de cambio...</span>
-                        )}
-                        {!ratesLoading && ratesError && (
-                          <span className="text-destructive">{ratesError}</span>
-                        )}
-                        {!ratesLoading && !ratesError && conversionRate && (
-                          <div className="flex flex-col gap-0.5 text-muted-foreground">
-                            <span>
-                              1 {expenseCurrency} = {conversionRate.toLocaleString('es-AR', { maximumFractionDigits: 4 })} {event.currency}
-                            </span>
-                            {convertedAmount !== null && (
-                              <span className="text-foreground">
-                                Se guardara como {formatCurrency(convertedAmount, event.currency)}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      {expenseError && (
+                        <p className="text-sm font-semibold text-destructive">{expenseError}</p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="rounded-[18px]"
+                          onClick={() => {
+                            resetExpenseForm()
+                            setIsAddExpenseOpen(false)
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit" className="rounded-[18px]">
+                          Guardar gasto
+                        </Button>
                       </div>
-                    )}
-
-                    <div className="space-y-2">
-                      <Label>Pago</Label>
-                      <Select value={expensePaidBy} onValueChange={setExpensePaidBy}>
-                        <SelectTrigger className="h-11 rounded-[18px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {participants.map((participant) => (
-                            <SelectItem key={participant.id} value={participant.id}>
-                              {participant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {expenseError && (
-                      <p className="text-sm font-semibold text-destructive">{expenseError}</p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-[18px]"
-                        onClick={() => {
-                          resetExpenseForm()
-                          setIsAddExpenseOpen(false)
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button type="submit" className="rounded-[18px]">
-                        Guardar gasto
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {expenses.length > 0 ? (
-              <div className="grid gap-3 xl:grid-cols-2">
-                {expenses.map((expense) => {
-                  const payer = participants.find((participant) => participant.id === expense.paidBy)
-
-                  return (
-                    <ExpenseCard
-                      key={expense.id}
-                      expense={expense}
-                      paidBy={payer?.name}
-                      currency={event.currency}
-                      onEdit={() => openEditExpense(expense)}
-                      onDelete={() => handleDeleteExpense(expense.id)}
-                    />
-                  )
-                })}
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
-            ) : (
-              <EmptyExpensesCard />
+
+              {expenses.length > 0 ? (
+                <div className="grid gap-3 xl:grid-cols-2">
+                  {expenses.map((expense) => {
+                    const payer = participants.find((participant) => participant.id === expense.paidBy)
+
+                    return (
+                      <ExpenseCard
+                        key={expense.id}
+                        expense={expense}
+                        paidBy={payer?.name}
+                        currency={event.currency}
+                        onEdit={() => openEditExpense(expense)}
+                        onDelete={() => handleDeleteExpense(expense.id)}
+                      />
+                    )
+                  })}
+                </div>
+              ) : (
+                <EmptyExpensesCard />
+              )}
+              </>
             )}
         </section>
       )}
@@ -768,157 +801,171 @@ function EventDetail({
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Saldos</h2>
             </div>
 
-            <div className="space-y-3">
-              <h3 className="text-base font-black text-foreground">Pagos sugeridos</h3>
-              {settlements.length > 0 ? (
-                <div className="grid gap-3 xl:grid-cols-2 [&>*]:min-w-0">
-                  {settlements.map((settlement) => (
-                    <SuggestedPaymentCard
-                      key={`${settlement.from}-${settlement.to}-${settlement.amount}`}
-                      from={settlement.fromName}
-                      to={settlement.toName}
-                      amount={settlement.amount}
-                      currency={event.currency}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="splitit-card p-6 text-center">
-                  <Check className="mx-auto h-9 w-9 text-primary" />
-                  <p className="mt-3 font-black text-foreground">Esta todo claro</p>
-                  <p className="text-sm text-muted-foreground">No hay pagos pendientes.</p>
-                </div>
-              )}
-            </div>
+            {/* Pagos sugeridos es SPLT-016. */}
+            {full && (
+              <>
+              <div className="space-y-3">
+                <h3 className="text-base font-black text-foreground">Pagos sugeridos</h3>
+                {settlements.length > 0 ? (
+                  <div className="grid gap-3 xl:grid-cols-2 [&>*]:min-w-0">
+                    {settlements.map((settlement) => (
+                      <SuggestedPaymentCard
+                        key={`${settlement.from}-${settlement.to}-${settlement.amount}`}
+                        from={settlement.fromName}
+                        to={settlement.toName}
+                        amount={settlement.amount}
+                        currency={event.currency}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="splitit-card p-6 text-center">
+                    <Check className="mx-auto h-9 w-9 text-primary" />
+                    <p className="mt-3 font-black text-foreground">Esta todo claro</p>
+                    <p className="text-sm text-muted-foreground">No hay pagos pendientes.</p>
+                  </div>
+                )}
+              </div>
+              </>
+            )}
           </div>
 
-          <aside className="splitit-card min-w-0 space-y-2 p-3 lg:sticky lg:top-28">
-            <h3 className="px-1 pb-1 text-base font-black text-foreground">Saldo por integrante</h3>
-            {balances.map((balance) => (
-              <MemberBalanceRow
-                key={balance.participantId}
-                name={balance.participantName}
-                amount={balance.netBalance}
-                currency={event.currency}
-              />
-            ))}
-          </aside>
+          {/* Saldo por integrante es SPLT-015. */}
+          {full && (
+            <>
+            <aside className="splitit-card min-w-0 space-y-2 p-3 lg:sticky lg:top-28">
+              <h3 className="px-1 pb-1 text-base font-black text-foreground">Saldo por integrante</h3>
+              {balances.map((balance) => (
+                <MemberBalanceRow
+                  key={balance.participantId}
+                  name={balance.participantName}
+                  amount={balance.netBalance}
+                  currency={event.currency}
+                />
+              ))}
+            </aside>
+            </>
+          )}
         </section>
       )}
 
-      <Dialog
-        open={editingExpenseId !== null}
-        onOpenChange={(open) => {
-          if (!open) closeEditExpense()
-        }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[24px]">
-          <DialogHeader>
-            <DialogTitle>Editar gasto</DialogTitle>
-            <DialogDescription>Modifica el nombre, monto o quien pago.</DialogDescription>
-          </DialogHeader>
+      {/* Editar y eliminar gasto son SPLT-013 y SPLT-014. */}
+      {full && (
+        <>
+        <Dialog
+          open={editingExpenseId !== null}
+          onOpenChange={(open) => {
+            if (!open) closeEditExpense()
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[24px]">
+            <DialogHeader>
+              <DialogTitle>Editar gasto</DialogTitle>
+              <DialogDescription>Modifica el nombre, monto o quien pago.</DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleUpdateExpense} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-expense-name">Nombre</Label>
-              <Input
-                id="edit-expense-name"
-                value={expenseName}
-                onChange={(item) => setExpenseName(item.target.value)}
-                placeholder="Ej: Supermercado"
-                className="rounded-[18px]"
-              />
-            </div>
-
-            <div className="grid grid-cols-[1fr_auto] gap-3">
+            <form onSubmit={handleUpdateExpense} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-expense-amount">Monto</Label>
+                <Label htmlFor="edit-expense-name">Nombre</Label>
                 <Input
-                  id="edit-expense-amount"
-                  inputMode="decimal"
-                  value={expenseAmount}
-                  onChange={(item) => setExpenseAmount(item.target.value)}
-                  placeholder="0"
+                  id="edit-expense-name"
+                  value={expenseName}
+                  onChange={(item) => setExpenseName(item.target.value)}
+                  placeholder="Ej: Supermercado"
                   className="rounded-[18px]"
                 />
               </div>
+
+              <div className="grid grid-cols-[1fr_auto] gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-expense-amount">Monto</Label>
+                  <Input
+                    id="edit-expense-amount"
+                    inputMode="decimal"
+                    value={expenseAmount}
+                    onChange={(item) => setExpenseAmount(item.target.value)}
+                    placeholder="0"
+                    className="rounded-[18px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Moneda</Label>
+                  <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
+                    <SelectTrigger className="h-10 w-[110px] rounded-[18px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedCurrencies.map((code) => (
+                        <SelectItem key={code} value={code}>
+                          {code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {needsConversion && (
+                <div className="rounded-[16px] border border-border bg-background px-3 py-2 text-xs font-semibold">
+                  {ratesLoading && (
+                    <span className="text-muted-foreground">Obteniendo tipo de cambio...</span>
+                  )}
+                  {!ratesLoading && ratesError && (
+                    <span className="text-destructive">{ratesError}</span>
+                  )}
+                  {!ratesLoading && !ratesError && conversionRate && (
+                    <div className="flex flex-col gap-0.5 text-muted-foreground">
+                      <span>
+                        1 {expenseCurrency} = {conversionRate.toLocaleString('es-AR', { maximumFractionDigits: 4 })} {event.currency}
+                      </span>
+                      {convertedAmount !== null && (
+                        <span className="text-foreground">
+                          Se guardara como {formatCurrency(convertedAmount, event.currency)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label>Moneda</Label>
-                <Select value={expenseCurrency} onValueChange={setExpenseCurrency}>
-                  <SelectTrigger className="h-10 w-[110px] rounded-[18px]">
+                <Label>Pago</Label>
+                <Select value={expensePaidBy} onValueChange={setExpensePaidBy}>
+                  <SelectTrigger className="h-11 rounded-[18px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {supportedCurrencies.map((code) => (
-                      <SelectItem key={code} value={code}>
-                        {code}
+                    {participants.map((participant) => (
+                      <SelectItem key={participant.id} value={participant.id}>
+                        {participant.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {needsConversion && (
-              <div className="rounded-[16px] border border-border bg-background px-3 py-2 text-xs font-semibold">
-                {ratesLoading && (
-                  <span className="text-muted-foreground">Obteniendo tipo de cambio...</span>
-                )}
-                {!ratesLoading && ratesError && (
-                  <span className="text-destructive">{ratesError}</span>
-                )}
-                {!ratesLoading && !ratesError && conversionRate && (
-                  <div className="flex flex-col gap-0.5 text-muted-foreground">
-                    <span>
-                      1 {expenseCurrency} = {conversionRate.toLocaleString('es-AR', { maximumFractionDigits: 4 })} {event.currency}
-                    </span>
-                    {convertedAmount !== null && (
-                      <span className="text-foreground">
-                        Se guardara como {formatCurrency(convertedAmount, event.currency)}
-                      </span>
-                    )}
-                  </div>
-                )}
+              {expenseError && (
+                <p className="text-sm font-semibold text-destructive">{expenseError}</p>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <Button type="button" variant="outline" className="rounded-[18px]" onClick={closeEditExpense}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="rounded-[18px]">
+                  Guardar cambios
+                </Button>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Pago</Label>
-              <Select value={expensePaidBy} onValueChange={setExpensePaidBy}>
-                <SelectTrigger className="h-11 rounded-[18px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {participants.map((participant) => (
-                    <SelectItem key={participant.id} value={participant.id}>
-                      {participant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {expenseError && (
-              <p className="text-sm font-semibold text-destructive">{expenseError}</p>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <Button type="button" variant="outline" className="rounded-[18px]" onClick={closeEditExpense}>
-                Cancelar
-              </Button>
-              <Button type="submit" className="rounded-[18px]">
-                Guardar cambios
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </form>
+          </DialogContent>
+        </Dialog>
+        </>
+      )}
 
       {activeTab === 'members' && (
         <section className="space-y-4">
           <div>
             <h2 className="text-2xl font-black text-foreground lg:text-3xl">Integrantes</h2>
-            <p className="text-sm font-semibold text-muted-foreground">{participants.length} personas</p>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
