@@ -598,12 +598,17 @@ function EventDetail({
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Gastos</h2>
             </div>
 
-            <article className="splitit-card p-4">
-              <p className="text-xs font-bold text-muted-foreground">Total de gastos</p>
-              <p className="mt-1 text-2xl font-black text-foreground">
-                {formatCurrency(totalExpenses, event.currency)}
-              </p>
-            </article>
+            {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
+                lugar al unico mensaje que importa ahi: que todavia no hay
+                nada cargado. Aparece recien con el primer gasto. */}
+            {expenses.length > 0 && (
+              <article className="splitit-card p-4">
+                <p className="text-xs font-bold text-muted-foreground">Total de gastos</p>
+                <p className="mt-1 text-2xl font-black text-foreground">
+                  {formatCurrency(totalExpenses, event.currency)}
+                </p>
+              </article>
+            )}
 
             <div className="grid gap-3 md:grid-cols-[220px]">
               <Dialog
