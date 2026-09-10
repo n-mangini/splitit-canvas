@@ -17,7 +17,7 @@ function Logo() {
     <div className="relative h-[34px] w-[74px]">
       <div className="absolute left-0 top-0 h-[34px] w-[57px] rounded-[8px] bg-primary" />
       <div className="absolute left-[calc(50%+1px)] top-[3px] flex -translate-x-1/2 items-center justify-center whitespace-nowrap text-[24px] font-extrabold leading-[1.15]">
-        <span className="text-[#fcfcfe]">Split</span>
+        <span className="text-primary-foreground">Split</span>
         <span className="text-black">It</span>
       </div>
     </div>
@@ -28,12 +28,12 @@ function NavBar() {
   const pathname = usePathname()
 
   return (
-    <header className="sticky top-0 z-50 bg-[#fcfcfe]/85 px-6 pb-4 pt-6 backdrop-blur-md sm:px-10 sm:pt-8">
+    <header className="sticky top-0 z-50 bg-primary-foreground/85 px-6 pb-4 pt-6 backdrop-blur-md sm:px-10 sm:pt-8">
       <div className="flex items-center justify-between">
         <Link
           href="/events"
           aria-label="Ir a eventos"
-          className="flex items-center rounded-[24px] border border-[#edf0f8] bg-[#fefefe] px-4 py-[11px]"
+          className="flex items-center rounded-[24px] border border-border bg-card px-4 py-[11px]"
         >
           <Logo />
         </Link>
@@ -41,9 +41,9 @@ function NavBar() {
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Abrir menu"
-            className="flex items-center gap-3 rounded-[24px] bg-[#001625] p-[10px] outline-none"
+            className="flex items-center gap-3 rounded-[24px] bg-foreground p-[10px] outline-none"
           >
-            <span className="flex size-12 items-center justify-center rounded-full text-[#fcfcfe]">
+            <span className="flex size-12 items-center justify-center rounded-full text-primary-foreground">
               <AlignJustify className="size-6" />
             </span>
           </DropdownMenuTrigger>
@@ -81,7 +81,7 @@ function NavBar() {
 
 export default function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#fcfcfe]">
+    <div className="min-h-screen overflow-x-hidden bg-primary-foreground">
       <NavBar />
       <main className="px-6 pb-16 pt-4 sm:px-10 sm:pt-6">{children}</main>
     </div>

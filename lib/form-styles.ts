@@ -8,6 +8,6 @@
  */
 
 export const fieldClass =
-  'h-auto rounded-[6px] border-[#cbd5e1] bg-white px-3 py-2 text-base leading-6 text-[#0f172a] placeholder:text-[#94a3b8] md:text-base'
+  'h-auto rounded-[6px] border-border bg-white px-3 py-2 text-base leading-6 text-foreground placeholder:text-placeholder md:text-base'
 
-export const primaryButtonClass = 'h-10 rounded-[8px] text-xl font-medium text-[#fcfcfe]'
+export const primaryButtonClass = 'h-10 rounded-[8px] text-xl font-medium text-primary-foreground'

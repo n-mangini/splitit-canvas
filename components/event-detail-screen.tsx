@@ -47,12 +47,13 @@ import {
   calculateSettlements,
   formatCurrency,
   formatDate,
-  getInitials,
   getInviteLink,
   mockEvents,
 } from '@/lib/mock-data'
 import { getExchangeRates } from '@/lib/exchange'
-import { getEventIcon } from '@/lib/event-icons'
+import { EmptyState } from '@/components/empty-state'
+import { EventBadge } from '@/components/event-badge'
+import { PersonAvatar } from '@/components/person-avatar'
 import { Event, Expense } from '@/lib/types'
 
 const supportedCurrencies = ['ARS', 'USD', 'EUR', 'BRL', 'UYU', 'CLP'] as const
@@ -78,29 +79,10 @@ const tabs: { value: TabValue; label: string }[] = [
   { value: 'members', label: 'Integrantes' },
 ]
 
-function IconCircle({
-  children,
-  tone = 'green',
-  size = 'md',
-}: {
-  children: ReactNode
-  tone?: 'green' | 'purple' | 'blue' | 'gray'
-  size?: 'sm' | 'md' | 'lg'
-}) {
+function ExpenseIcon() {
   return (
-    <div
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-[18px]',
-        size === 'sm' && 'h-10 w-10',
-        size === 'md' && 'h-12 w-12',
-        size === 'lg' && 'h-14 w-14 rounded-[20px]',
-        tone === 'green' && 'bg-[#E8FAF5] text-primary',
-        tone === 'purple' && 'bg-[#F0E9FF] text-secondary',
-        tone === 'blue' && 'bg-[#EAF4FF] text-[#2D9CDB]',
-        tone === 'gray' && 'bg-muted text-muted-foreground'
-      )}
-    >
-      {children}
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-soft-primary text-primary">
+      <ReceiptText className="size-5" />
     </div>
   )
 }
@@ -146,9 +128,7 @@ function ExpenseCard({
   return (
     <article className="splitit-card w-full p-4">
       <div className="flex items-center gap-3">
-        <IconCircle tone="green" size="sm">
-          <ReceiptText className="h-5 w-5" />
-        </IconCircle>
+        <ExpenseIcon />
 
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-black text-foreground">{expense.name}</h3>
@@ -180,7 +160,7 @@ function ExpenseCard({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-secondary hover:bg-[#F0E9FF] hover:text-secondary"
+                  className="rounded-full text-secondary hover:bg-soft-secondary hover:text-secondary"
                   aria-label={`Eliminar ${expense.name}`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -211,34 +191,6 @@ function ExpenseCard({
   )
 }
 
-function EmptyExpensesCard() {
-  return (
-    <section className="splitit-card p-5 text-center sm:p-6">
-      <h3 className="text-xl font-black text-foreground">Todavia no hay gastos</h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-        Cuando cargues gastos, van a aparecer aca para revisar quien pago y cuanto corresponde.
-      </p>
-    </section>
-  )
-}
-
-/*
-  Vacio no es lo mismo que saldado. "Esta todo claro" es lo que se ve cuando
-  hubo gastos y ya nadie debe nada; esto es lo que se ve cuando todavia no
-  paso nada.
-*/
-function EmptyBalancesCard() {
-  return (
-    <section className="splitit-card p-5 text-center sm:p-6">
-      <h3 className="text-xl font-black text-foreground">Todavia no hay saldos</h3>
-      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-        Cuando el evento tenga gastos cargados, aca vas a ver cuanto le corresponde a cada
-        integrante.
-      </p>
-    </section>
-  )
-}
-
 function SuggestedPaymentCard({
   from,
   to,
@@ -253,17 +205,13 @@ function SuggestedPaymentCard({
   return (
     <article className="splitit-card p-4">
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F0E9FF] text-xs font-black text-secondary sm:h-11 sm:w-11 sm:text-sm">
-          {getInitials(from)}
-        </div>
+        <PersonAvatar name={from} size="sm" tone="owes" className="sm:size-11 sm:text-sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-black text-foreground">{from}</p>
           <p className="hidden text-xs font-semibold text-muted-foreground sm:block">debe pagar</p>
         </div>
         <ArrowRight className="h-4 w-4 shrink-0 text-primary sm:h-5 sm:w-5" />
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E8FAF5] text-xs font-black text-primary sm:h-11 sm:w-11 sm:text-sm">
-          {getInitials(to)}
-        </div>
+        <PersonAvatar name={to} size="sm" tone="receives" className="sm:size-11 sm:text-sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-black text-foreground">{to}</p>
           <p className="hidden text-xs font-semibold text-muted-foreground sm:block">debe recibir</p>
@@ -282,16 +230,14 @@ function MemberBalanceRow({ name, amount, currency }: { name: string; amount: nu
 
   return (
     <article className="flex items-center gap-3 rounded-[20px] bg-card p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-black text-foreground">
-        {getInitials(name)}
-      </div>
+      <PersonAvatar name={name} size="sm" tone={amount > 0 ? 'receives' : amount < 0 ? 'owes' : 'neutral'} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-black text-foreground">{name}</p>
         <span
           className={cn(
             'mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-black',
-            status === 'recibe' && 'bg-[#E8FAF5] text-primary',
-            status === 'debe' && 'bg-[#F0E9FF] text-secondary',
+            status === 'recibe' && 'bg-soft-primary text-primary',
+            status === 'debe' && 'bg-soft-secondary text-secondary',
             status === 'en cero' && 'bg-muted text-muted-foreground'
           )}
         >
@@ -310,35 +256,6 @@ function MemberBalanceRow({ name, amount, currency }: { name: string; amount: nu
         {formatCurrency(amount, currency)}
       </p>
     </article>
-  )
-}
-
-/*
-  Un evento que el usuario no puede abrir: no existe (SPLT-007 #13) o no es
-  suyo (SPLT-007 #12). Los dos criterios comparten pantalla a proposito — asi
-  nadie con un link ajeno puede confirmar que ese evento existe.
-
-  Antes esta pantalla caia en el primer evento del mock, asi que un link roto
-  se veia igual que uno bueno. El estado tiene salida propia: sin volver a
-  "Tus eventos" se queda sin nada para hacer.
-*/
-function MissingEventCard() {
-  return (
-    <section className="splitit-card p-6 sm:p-8">
-      <div className="mx-auto max-w-sm text-center">
-        <span className="mx-auto mb-3 flex size-12 items-center justify-center rounded-[16px] bg-[#f1f5f9] text-[#868992]">
-          <SearchX className="size-6" />
-        </span>
-        <h2 className="text-2xl font-extrabold text-[#001625]">No encontramos este evento</h2>
-        <p className="mt-2 text-sm font-medium text-[#868992]">
-          Puede que lo hayan eliminado, que el link este incompleto, o que no estes invitado.
-          Revisa el link con quien te lo compartio.
-        </p>
-        <Link href="/events" className="mt-5 inline-block">
-          <Button className={cn(primaryButtonClass, 'px-5')}>Ir a mis eventos</Button>
-        </Link>
-      </div>
-    </section>
   )
 }
 
@@ -367,7 +284,26 @@ export function EventDetailScreen({
   full?: boolean
 }) {
   const event = mockEvents.find((item) => item.id === eventId)
-  if (!event) return <MissingEventCard />
+  if (!event) {
+    /*
+      No existe (SPLT-007 #13) o no es suyo (#12). Comparten pantalla a
+      proposito: asi nadie con un link ajeno confirma que ese evento existe.
+      Antes esto caia en el primer evento del mock y un link roto se veia
+      igual que uno bueno.
+    */
+    return (
+      <EmptyState
+        icon={SearchX}
+        title="No encontramos este evento"
+        description="Puede que lo hayan eliminado, que el link este incompleto, o que no estes invitado. Revisa el link con quien te lo compartio."
+        action={
+          <Link href="/events">
+            <Button className={cn(primaryButtonClass, 'px-5')}>Ir a mis eventos</Button>
+          </Link>
+        }
+      />
+    )
+  }
 
   return <EventDetail event={event} empty={empty} initialTab={initialTab} full={full} />
 }
@@ -389,7 +325,6 @@ function EventDetail({
   const [copied, setCopied] = useState(false)
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false)
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null)
-  const { Icon: EventIconComponent } = getEventIcon(event.icon ?? 'plane')
   const [expenseName, setExpenseName] = useState('')
   const [expenseAmount, setExpenseAmount] = useState('')
   const [expenseCurrency, setExpenseCurrency] = useState(event.currency)
@@ -615,9 +550,7 @@ function EventDetail({
 
         <div className="flex items-center gap-4 lg:items-end lg:justify-between">
           <div className="flex items-center gap-4">
-            <IconCircle tone="blue" size="lg">
-              <EventIconComponent className="h-7 w-7" />
-            </IconCircle>
+            <EventBadge icon={event.icon} />
             <div>
               <h1 className="text-2xl font-black text-foreground lg:text-4xl">{event.name}</h1>
               {event.description && (
@@ -626,7 +559,7 @@ function EventDetail({
                 </p>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#EAF4FF] px-3 py-1 text-xs font-black text-[#2D9CDB]">
+                <span className="rounded-full bg-soft-info px-3 py-1 text-xs font-black text-info">
                   Moneda {getCurrencyLabel(event.currency)}
                 </span>
               </div>
@@ -646,7 +579,10 @@ function EventDetail({
             {/* Cargar y listar gastos es SPLT-011 y SPLT-012. Sin ellas, la
                 seccion muestra el estado vacio: es lo que ve cualquiera que
                 abre un evento sin gastos, no un hueco a la espera de codigo. */}
-            {!full && <EmptyExpensesCard />}
+            {!full && <EmptyState
+                  title="Todavia no hay gastos"
+                  description="Cuando cargues gastos, van a aparecer aca para revisar quien pago y cuanto corresponde."
+                />}
             {full && (
               <>
               {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
@@ -807,7 +743,10 @@ function EventDetail({
                   })}
                 </div>
               ) : (
-                <EmptyExpensesCard />
+                <EmptyState
+                  title="Todavia no hay gastos"
+                  description="Cuando cargues gastos, van a aparecer aca para revisar quien pago y cuanto corresponde."
+                />
               )}
               </>
             )}
@@ -823,7 +762,12 @@ function EventDetail({
 
             {/* Saldo por integrante es SPLT-015 y pagos sugeridos SPLT-016.
                 Sin ellas, la seccion muestra su estado vacio. */}
-            {!full && <EmptyBalancesCard />}
+            {!full && (
+              <EmptyState
+                title="Todavia no hay saldos"
+                description="Cuando el evento tenga gastos cargados, aca vas a ver cuanto le corresponde a cada integrante."
+              />
+            )}
             {/* Pagos sugeridos es SPLT-016. */}
             {full && (
               <>
@@ -998,9 +942,7 @@ function EventDetail({
               const isOwner = !!participant.userId && participant.userId === event.createdBy
               return (
                 <article key={participant.id} className="splitit-card flex items-center gap-3 p-4">
-                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black ${isOwner ? 'bg-primary text-primary-foreground' : 'bg-[#E8FAF5] text-primary'}`}>
-                    {getInitials(participant.name)}
-                  </div>
+                  <PersonAvatar name={participant.name} tone={isOwner ? 'owner' : 'receives'} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-black text-foreground">{participant.name}</p>

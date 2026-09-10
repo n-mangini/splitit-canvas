@@ -153,8 +153,9 @@ export const mockEvents: Event[] = [
     icon: 'party'
   },
   {
-    // Sin descripcion: es opcional al crear el evento, asi que el listado tiene
-    // que saber dibujar la card sin ese renglon.
+    // El evento creado con lo minimo: sin descripcion y sin icono elegido.
+    // Los dos son opcionales, asi que el listado tiene que saber dibujar la
+    // card sin ese renglon, y el icono cae en el neutro.
     id: 'event-4',
     name: 'Asado del viernes',
     createdBy: 'user-1',
@@ -163,7 +164,6 @@ export const mockEvents: Event[] = [
     createdAt: '2024-02-14T20:00:00Z',
     inviteCode: 'ASADO24',
     currency: 'ARS',
-    icon: 'food'
   },
 ]
 
