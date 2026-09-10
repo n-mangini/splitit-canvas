@@ -222,6 +222,23 @@ function EmptyExpensesCard() {
   )
 }
 
+/*
+  Vacio no es lo mismo que saldado. "Esta todo claro" es lo que se ve cuando
+  hubo gastos y ya nadie debe nada; esto es lo que se ve cuando todavia no
+  paso nada.
+*/
+function EmptyBalancesCard() {
+  return (
+    <section className="splitit-card p-5 text-center sm:p-6">
+      <h3 className="text-xl font-black text-foreground">Todavia no hay saldos</h3>
+      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+        Cuando el evento tenga gastos cargados, aca vas a ver cuanto le corresponde a cada
+        integrante.
+      </p>
+    </section>
+  )
+}
+
 function SuggestedPaymentCard({
   from,
   to,
@@ -626,7 +643,10 @@ function EventDetail({
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Gastos</h2>
             </div>
 
-            {/* El contenido de Gastos es SPLT-011 (agregar) y SPLT-012 (consultar). */}
+            {/* Cargar y listar gastos es SPLT-011 y SPLT-012. Sin ellas, la
+                seccion muestra el estado vacio: es lo que ve cualquiera que
+                abre un evento sin gastos, no un hueco a la espera de codigo. */}
+            {!full && <EmptyExpensesCard />}
             {full && (
               <>
               {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
@@ -801,6 +821,9 @@ function EventDetail({
               <h2 className="text-2xl font-black text-foreground lg:text-3xl">Saldos</h2>
             </div>
 
+            {/* Saldo por integrante es SPLT-015 y pagos sugeridos SPLT-016.
+                Sin ellas, la seccion muestra su estado vacio. */}
+            {!full && <EmptyBalancesCard />}
             {/* Pagos sugeridos es SPLT-016. */}
             {full && (
               <>
