@@ -277,11 +277,14 @@ export function EventDetailScreen({
   empty = false,
   initialTab = 'expenses',
   full = false,
+  ownerActions = false,
 }: {
   eventId: string
   empty?: boolean
   initialTab?: TabValue
   full?: boolean
+  /** Editar y eliminar el evento: SPLT-020 y SPLT-021. */
+  ownerActions?: boolean
 }) {
   const event = mockEvents.find((item) => item.id === eventId)
   if (!event) {
@@ -305,7 +308,15 @@ export function EventDetailScreen({
     )
   }
 
-  return <EventDetail event={event} empty={empty} initialTab={initialTab} full={full} />
+  return (
+    <EventDetail
+      event={event}
+      empty={empty}
+      initialTab={initialTab}
+      full={full}
+      ownerActions={ownerActions || full}
+    />
+  )
 }
 
 function EventDetail({
@@ -313,11 +324,13 @@ function EventDetail({
   empty,
   initialTab,
   full,
+  ownerActions,
 }: {
   event: Event
   empty: boolean
   initialTab: TabValue
   full: boolean
+  ownerActions: boolean
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(empty ? [] : event.expenses)
   const [participants, setParticipants] = useState<Event['participants']>(event.participants)
@@ -515,9 +528,32 @@ function EventDetail({
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
-          {/* Invitar es SPLT-008, no esta historia. */}
-          {full && (
-            <div className="flex items-center gap-2">
+          {/* Las acciones van juntas a la derecha: el justify-between del
+              contenedor separa la flecha de volver de todas ellas. */}
+          <div className="flex items-center gap-2">
+            {/* Editar y eliminar el evento son SPLT-020 y SPLT-021. */}
+            {ownerActions && (
+              <>
+              <Link
+                href={`/events/${event.id}/edit`}
+                aria-label="Editar evento"
+                className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-primary"
+              >
+                <Pencil className="size-5" />
+              </Link>
+              <Link
+                href={`/events/${event.id}/delete`}
+                aria-label="Eliminar evento"
+                className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-destructive"
+              >
+                <Trash2 className="size-5" />
+              </Link>
+              </>
+            )}
+
+            {/* Invitar es SPLT-008, no esta historia. */}
+            {full && (
+              <>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button className="h-11 rounded-[18px] bg-primary px-4 font-black text-primary-foreground hover:bg-primary/90">
@@ -544,8 +580,9 @@ function EventDetail({
                   </div>
                 </DialogContent>
               </Dialog>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 lg:items-end lg:justify-between">
