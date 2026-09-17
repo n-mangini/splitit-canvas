@@ -127,6 +127,76 @@ export const screens: Screen[] = [
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
     hidden: true,
   },
+  {
+    // Compartir el enlace es un modal sobre el detalle, como editar y eliminar.
+    // Solo lo ve el dueño: un integrante cualquiera no tiene el boton.
+    route: '/events/event-1/invitar',
+    title: 'Compartir enlace',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
+  },
+  {
+    // El token de la ruta es opaco a proposito: quien entra sin cuenta maneja
+    // los gastos del evento, asi que el enlace no puede ser adivinable.
+    // Decision del PO del 2026-09-17.
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd',
+    title: 'Acceso por enlace',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
+    hidden: true,
+  },
+  {
+    // Un enlace que no corresponde a ningun evento: roto, viejo, o de un
+    // evento eliminado. Cualquier token que no exista cae aca.
+    route: '/join/enlace-invalido',
+    title: 'Acceso por enlace · enlace inválido',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
+    hidden: true,
+  },
+  {
+    // Entrar sin cuenta tambien pasa por identificarse: si no, el invitado
+    // carga gastos en nombre de cualquiera y no tiene saldo propio.
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/quien-sos',
+    title: 'Sin cuenta · quién sos',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 23 }],
+  },
+  {
+    // La salida para quien no esta en la lista que armo el dueño. Es la unica
+    // excepcion a que los integrantes los administre el dueño: uno se da de
+    // alta a si mismo, y nada mas.
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/soy-nuevo',
+    title: 'Sin cuenta · no estoy en la lista',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 23 }],
+    hidden: true,
+  },
+  {
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular',
+    title: 'Con cuenta · quién sos',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
+  },
+  {
+    // La cuenta ya tiene integrante en este evento, asi que no se le vuelve a
+    // preguntar quien es. El estado sale de la ruta y no de los datos, para que
+    // todo el flujo se vea sobre el mismo evento de ejemplo.
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular/ya-vinculado',
+    title: 'Con cuenta · ya estás vinculado',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
+    hidden: true,
+  },
+  {
+    // Sumarse como integrante nuevo llegando con cuenta: la misma salida que
+    // tiene quien entra sin cuenta, y ademas queda vinculado.
+    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular/soy-nuevo',
+    title: 'Con cuenta · no estoy en la lista',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
+    hidden: true,
+  },
 ]
 
 /** Lo que el canvas muestra. */

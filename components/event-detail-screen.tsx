@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Pencil,
   Plus,
-  WandSparkles,
   ReceiptText,
   SearchX,
   Share2,
@@ -47,7 +46,7 @@ import {
   calculateSettlements,
   formatCurrency,
   formatDate,
-  getInviteLink,
+  mockCurrentUser,
   mockEvents,
 } from '@/lib/mock-data'
 import { getExchangeRates } from '@/lib/exchange'
@@ -57,19 +56,6 @@ import { PersonAvatar } from '@/components/person-avatar'
 import { Event, Expense } from '@/lib/types'
 
 const supportedCurrencies = ['ARS', 'USD', 'EUR', 'BRL', 'UYU', 'CLP'] as const
-
-const currencyLabels: Record<string, string> = {
-  ARS: 'ARS - Peso Argentino',
-  USD: 'USD - Dolar',
-  EUR: 'EUR - Euro',
-  BRL: 'BRL - Real',
-  UYU: 'UYU - Peso Uruguayo',
-  CLP: 'CLP - Peso Chileno',
-}
-
-function getCurrencyLabel(currency: string) {
-  return currencyLabels[currency] ?? currency
-}
 
 type TabValue = 'expenses' | 'balances' | 'members'
 
@@ -90,7 +76,7 @@ function ExpenseIcon() {
 function TopTabs({ active, onChange }: { active: TabValue; onChange: (value: TabValue) => void }) {
   return (
     <div className="-mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0">
-      <div className="flex min-w-max gap-5 border-b border-border lg:gap-8">
+      <div className="flex min-w-max gap-5 lg:gap-8">
         {tabs.map((tab) => (
           <button
             key={tab.value}
@@ -277,14 +263,11 @@ export function EventDetailScreen({
   empty = false,
   initialTab = 'expenses',
   full = false,
-  ownerActions = false,
 }: {
   eventId: string
   empty?: boolean
   initialTab?: TabValue
   full?: boolean
-  /** Editar y eliminar el evento: SPLT-020 y SPLT-021. */
-  ownerActions?: boolean
 }) {
   const event = mockEvents.find((item) => item.id === eventId)
   if (!event) {
@@ -314,7 +297,6 @@ export function EventDetailScreen({
       empty={empty}
       initialTab={initialTab}
       full={full}
-      ownerActions={ownerActions || full}
     />
   )
 }
@@ -324,18 +306,15 @@ function EventDetail({
   empty,
   initialTab,
   full,
-  ownerActions,
 }: {
   event: Event
   empty: boolean
   initialTab: TabValue
   full: boolean
-  ownerActions: boolean
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(empty ? [] : event.expenses)
   const [participants, setParticipants] = useState<Event['participants']>(event.participants)
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab)
-  const [copied, setCopied] = useState(false)
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false)
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null)
   const [expenseName, setExpenseName] = useState('')
@@ -377,18 +356,11 @@ function EventDetail({
     }
   }, [isExpenseFormOpen, needsConversion, rates])
 
+  const isEventOwner = event.createdBy === mockCurrentUser.id
   const eventSnapshot = { ...event, expenses }
   const balances = calculateBalances(eventSnapshot)
   const settlements = calculateSettlements(balances)
   const totalExpenses = expenses.reduce((acc, expense) => acc + expense.amount, 0)
-  const inviteLink = getInviteLink(event.inviteCode)
-
-  const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(inviteLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1600)
-  }
-
   const resetExpenseForm = () => {
     setExpenseName('')
     setExpenseAmount('')
@@ -531,63 +503,42 @@ function EventDetail({
           {/* Las acciones van juntas a la derecha: el justify-between del
               contenedor separa la flecha de volver de todas ellas. */}
           <div className="flex items-center gap-2">
-            {/* Editar y eliminar el evento son SPLT-020 y SPLT-021. */}
-            {ownerActions && (
-              <>
-              <Link
-                href={`/events/${event.id}/edit`}
-                aria-label="Editar evento"
-                className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-primary"
-              >
-                <Pencil className="size-5" />
-              </Link>
-              <Link
-                href={`/events/${event.id}/delete`}
-                aria-label="Eliminar evento"
-                className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-destructive"
-              >
-                <Trash2 className="size-5" />
-              </Link>
-              </>
-            )}
+            {/* La puerta de entrada a editar (SPLT-020) y eliminar (SPLT-021)
+                el evento. Las dos historias estan entregadas, asi que desde el
+                detalle se llega a ellas. */}
+            <Link
+              href={`/events/${event.id}/edit`}
+              aria-label="Editar evento"
+              className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-primary"
+            >
+              <Pencil className="size-5" />
+            </Link>
+            <Link
+              href={`/events/${event.id}/delete`}
+              aria-label="Eliminar evento"
+              className="flex size-11 items-center justify-center rounded-full bg-card text-foreground shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition-colors hover:text-destructive"
+            >
+              <Trash2 className="size-5" />
+            </Link>
 
-            {/* Invitar es SPLT-008, no esta historia. */}
-            {full && (
-              <>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="h-11 rounded-[18px] bg-primary px-4 font-black text-primary-foreground hover:bg-primary/90">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Invitar
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="rounded-[24px]">
-                  <DialogHeader>
-                    <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-[18px] bg-primary/10">
-                      <WandSparkles className="h-7 w-7 text-primary" />
-                    </div>
-                    <DialogTitle className="text-center">Magic link</DialogTitle>
-                    <DialogDescription className="text-center">
-                      Comparte el link y cualquiera puede unirse al evento.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Input readOnly value={inviteLink} className="rounded-[18px]" />
-                    <Button onClick={handleCopyLink} className="w-full rounded-[18px]">
-                      {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
-                      {copied ? 'Copiado' : 'Copiar link'}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              </>
+            {/* Invitar es SPLT-008: el enlace se muestra en un modal sobre el
+                detalle, igual que editar y eliminar. Solo lo ve el dueño, que
+                es el unico que puede generar el enlace de acceso. */}
+            {isEventOwner && (
+              <Link
+                href={`/events/${event.id}/invitar`}
+                className={cn(primaryButtonClass, 'flex items-center gap-2 bg-primary px-4 hover:bg-primary/90')}
+              >
+                <Share2 className="size-4" />
+                Invitar
+              </Link>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-4 lg:items-end lg:justify-between">
           <div className="flex items-center gap-4">
-            <EventBadge icon={event.icon} />
+            <EventBadge icon={event.icon} size="title" />
             <div>
               <h1 className="text-2xl font-black text-foreground lg:text-4xl">{event.name}</h1>
               {event.description && (
@@ -595,11 +546,6 @@ function EventDetail({
                   {event.description}
                 </p>
               )}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-soft-info px-3 py-1 text-xs font-black text-info">
-                  Moneda {getCurrencyLabel(event.currency)}
-                </span>
-              </div>
             </div>
           </div>
         </div>

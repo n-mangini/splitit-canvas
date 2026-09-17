@@ -8,70 +8,88 @@ export const mockCurrentUser: User = {
   avatar: undefined
 }
 
+/**
+ * Quien llega por un enlace de invitacion. No es el usuario de siempre a
+ * proposito: el dueño ya esta adentro del evento, asi que las pantallas de
+ * invitacion no se pueden ver desde su cuenta.
+ */
+export const mockInvitedUser: User = {
+  id: 'user-4',
+  name: 'Sofia',
+  email: 'sofia@email.com',
+  avatar: undefined
+}
+
 // Mock participants
+//
+// El orden es el del evento de ejemplo: primero el dueño y despues el resto.
+// Francisco no tiene cuenta a proposito — es el integrante que queda libre
+// para vincular cuando alguien entra por el enlace con su cuenta.
 const mockParticipants: Participant[] = [
   { id: 'p-1', name: 'Nicolas', userId: 'user-1', email: 'nicolas@email.com', isGuest: false },
-  { id: 'p-2', name: 'Marcos', userId: 'user-2', email: 'marcos@email.com', isGuest: false },
+  { id: 'p-2', name: 'Francisco', isGuest: true },
   { id: 'p-3', name: 'Lucas', userId: 'user-3', email: 'lucas@email.com', isGuest: false },
-  { id: 'p-4', name: 'Francisco', isGuest: true },
+  { id: 'p-4', name: 'Marcos', userId: 'user-2', email: 'marcos@email.com', isGuest: false },
 ]
 
-// Mock expenses for trip
-const tripExpenses: Expense[] = [
+const [nicolas, francisco, lucas, marcos] = mockParticipants
+
+// Gastos de la juntada: el evento de ejemplo de todo el prototipo.
+const asadoExpenses: Expense[] = [
   {
     id: 'exp-1',
     eventId: 'event-1',
-    name: 'Hotel 3 noches',
-    amount: 45000,
+    name: 'Carne y achuras',
+    amount: 32000,
     paidBy: 'p-1',
     splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
-    date: '2024-01-15',
-    category: 'accommodation',
-    createdAt: '2024-01-15T10:00:00Z'
+    date: '2024-03-16',
+    category: 'food',
+    createdAt: '2024-03-16T11:00:00Z'
   },
   {
     id: 'exp-2',
     eventId: 'event-1',
-    name: 'Cena grupal',
-    amount: 12500,
-    paidBy: 'p-2',
+    name: 'Bebidas',
+    amount: 14500,
+    paidBy: 'p-4',
     splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
-    date: '2024-01-15',
+    date: '2024-03-16',
     category: 'food',
-    createdAt: '2024-01-15T21:00:00Z'
+    createdAt: '2024-03-16T12:30:00Z'
   },
   {
     id: 'exp-3',
     eventId: 'event-1',
-    name: 'Alquiler auto',
-    amount: 28000,
+    name: 'Carbon y leña',
+    amount: 6800,
     paidBy: 'p-3',
     splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
-    date: '2024-01-14',
-    category: 'transport',
-    createdAt: '2024-01-14T09:00:00Z'
+    date: '2024-03-16',
+    category: 'other',
+    createdAt: '2024-03-16T13:00:00Z'
   },
   {
     id: 'exp-4',
     eventId: 'event-1',
-    name: 'Entradas museo',
-    amount: 6000,
-    paidBy: 'p-4',
+    name: 'Ensaladas y pan',
+    amount: 9200,
+    paidBy: 'p-2',
     splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
-    date: '2024-01-16',
-    category: 'entertainment',
-    createdAt: '2024-01-16T11:00:00Z'
+    date: '2024-03-16',
+    category: 'food',
+    createdAt: '2024-03-16T13:20:00Z'
   },
   {
     id: 'exp-5',
     eventId: 'event-1',
-    name: 'Supermercado',
-    amount: 8500,
+    name: 'Postre y helado',
+    amount: 7400,
     paidBy: 'p-1',
     splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
-    date: '2024-01-16',
+    date: '2024-03-16',
     category: 'food',
-    createdAt: '2024-01-16T18:00:00Z'
+    createdAt: '2024-03-16T17:00:00Z'
   },
 ]
 
@@ -83,7 +101,7 @@ const aptExpenses: Expense[] = [
     name: 'Alquiler Enero',
     amount: 150000,
     paidBy: 'p-1',
-    splitBetween: ['p-1', 'p-2', 'p-3'],
+    splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
     date: '2024-01-01',
     category: 'accommodation',
     createdAt: '2024-01-01T10:00:00Z'
@@ -94,7 +112,7 @@ const aptExpenses: Expense[] = [
     name: 'Luz',
     amount: 8500,
     paidBy: 'p-2',
-    splitBetween: ['p-1', 'p-2', 'p-3'],
+    splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
     date: '2024-01-10',
     category: 'utilities',
     createdAt: '2024-01-10T12:00:00Z'
@@ -105,7 +123,7 @@ const aptExpenses: Expense[] = [
     name: 'Internet',
     amount: 4500,
     paidBy: 'p-3',
-    splitBetween: ['p-1', 'p-2', 'p-3'],
+    splitBetween: ['p-1', 'p-2', 'p-3', 'p-4'],
     date: '2024-01-05',
     category: 'utilities',
     createdAt: '2024-01-05T15:00:00Z'
@@ -113,28 +131,33 @@ const aptExpenses: Expense[] = [
 ]
 
 // Mock events
+//
+// «Juntada Asado» es el evento de ejemplo de todo el prototipo: es el que se
+// abre en el detalle, el que tiene gastos y el que se comparte por enlace. Los
+// demas existen por un caso que el primero no puede mostrar — un evento ajeno,
+// uno creado con lo minimo, uno donde ya no queda integrante libre.
 export const mockEvents: Event[] = [
   {
     id: 'event-1',
-    name: 'Viaje a Bariloche',
-    description: 'Vacaciones de verano con amigos',
+    name: 'Juntada Asado',
+    description: 'Asado del sabado en casa de Nicolas',
     createdBy: 'user-1',
-    participants: mockParticipants.slice(0, 4),
-    expenses: tripExpenses,
-    createdAt: '2024-01-10T08:00:00Z',
-    inviteCode: 'BARI2024',
+    participants: [nicolas, francisco, lucas, marcos],
+    expenses: asadoExpenses,
+    createdAt: '2024-03-14T08:00:00Z',
+    inviteCode: 'r7Qk2Vx9mLpZ4tHnCwB3sd',
     currency: 'ARS',
-    icon: 'plane'
+    icon: 'food'
   },
   {
     id: 'event-2',
     name: 'Depto compartido',
     description: 'Gastos mensuales del departamento',
     createdBy: 'user-1',
-    participants: mockParticipants.slice(0, 3),
+    participants: [nicolas, francisco, lucas, marcos],
     expenses: aptExpenses,
     createdAt: '2024-01-01T10:00:00Z',
-    inviteCode: 'DEPTO01',
+    inviteCode: 'Yp3Nf8KdQm1XvTzR6bLhJw',
     currency: 'ARS',
     icon: 'home'
   },
@@ -145,10 +168,10 @@ export const mockEvents: Event[] = [
     name: 'Cumple de Ana',
     description: 'Fiesta de cumpleanos',
     createdBy: 'user-2',
-    participants: mockParticipants,
+    participants: [nicolas, francisco, lucas, marcos],
     expenses: [],
     createdAt: '2024-02-01T10:00:00Z',
-    inviteCode: 'ANA2024',
+    inviteCode: 'a9WcEu5TnQbK2ZyM7xRdFs',
     currency: 'ARS',
     icon: 'party'
   },
@@ -157,15 +180,20 @@ export const mockEvents: Event[] = [
     // Los dos son opcionales, asi que el listado tiene que saber dibujar la
     // card sin ese renglon, y el icono cae en el neutro.
     id: 'event-4',
-    name: 'Asado del viernes',
+    name: 'Salida del sabado',
     createdBy: 'user-1',
-    participants: mockParticipants.slice(0, 2),
+    participants: [nicolas, francisco, lucas, marcos],
     expenses: [],
     createdAt: '2024-02-14T20:00:00Z',
-    inviteCode: 'ASADO24',
+    inviteCode: 'Jq4Hs8ZvB6nTgLmPkXr2Wd',
     currency: 'ARS',
   },
 ]
+
+/** El evento de un enlace de invitacion, o nada si el enlace no corresponde a ninguno. */
+export function findEventByInviteCode(code: string): Event | undefined {
+  return mockEvents.find((event) => event.inviteCode === code)
+}
 
 // Calculate balances for an event
 export function calculateBalances(event: Event): Balance[] {
