@@ -15,7 +15,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <EventDetailScreen eventId={id} ownerActions initialTab="members" />
+      <EventDetailScreen eventId={id} initialTab="members" />
       <EditEventDialog event={event} />
     </>
   )

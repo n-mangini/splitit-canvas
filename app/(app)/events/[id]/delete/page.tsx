@@ -10,7 +10,7 @@ export default async function DeleteEventPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <EventDetailScreen eventId={id} ownerActions initialTab="members" />
+      <EventDetailScreen eventId={id} initialTab="members" />
       <DeleteEventDialog event={event} />
     </>
   )

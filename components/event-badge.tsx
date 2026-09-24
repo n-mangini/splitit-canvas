@@ -18,7 +18,7 @@ export function EventBadge({
   className,
 }: {
   icon?: EventIcon
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'title'
   className?: string
 }) {
   const { Icon } = getEventIcon(icon)
@@ -31,10 +31,20 @@ export function EventBadge({
         size === 'sm' && 'size-10 rounded-[12px]',
         size === 'md' && 'size-14 rounded-[16px]',
         size === 'lg' && 'size-16 rounded-[18px]',
+        // Acompaña al nombre del evento y su descripcion: alto de las dos
+        // lineas juntas, que crecen en desktop y el cuadrado con ellas.
+        size === 'title' && 'size-14 rounded-[16px] lg:size-[68px] lg:rounded-[20px]',
         className
       )}
     >
-      <Icon className={cn(size === 'sm' && 'size-5', size === 'md' && 'size-6', size === 'lg' && 'size-7')} />
+      <Icon
+        className={cn(
+          size === 'sm' && 'size-5',
+          size === 'md' && 'size-6',
+          size === 'lg' && 'size-7',
+          size === 'title' && 'size-6 lg:size-8'
+        )}
+      />
     </div>
   )
 }
