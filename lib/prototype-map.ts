@@ -6,7 +6,7 @@
 //
 // Es lo unico que hay que mantener cuando se agrega o cambia una pantalla.
 
-export const ISSUES_BASE = 'https://github.com/SplitItLab/dirproy/issues'
+export const ISSUES_BASE = 'https://github.com/SplitItLab/roadmap/issues'
 
 export type Story = {
   id: string
@@ -160,7 +160,7 @@ export const screens: Screen[] = [
     route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/quien-sos',
     title: 'Sin cuenta · quién sos',
     epic: 'Invitaciones',
-    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 23 }],
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
   },
   {
     // La salida para quien no esta en la lista que armo el dueño. Es la unica
@@ -169,7 +169,7 @@ export const screens: Screen[] = [
     route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/soy-nuevo',
     title: 'Sin cuenta · no estoy en la lista',
     epic: 'Invitaciones',
-    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 23 }],
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
     hidden: true,
   },
   {
