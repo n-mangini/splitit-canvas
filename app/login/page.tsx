@@ -95,7 +95,7 @@ function LoginContent() {
           <Button
             type="submit"
             disabled={isLoading}
-            className={cn(primaryButtonClass, 'w-full')}
+            className={cn(primaryButtonClass, 'h-11 w-full')}
           >
             {isLoading ? <Spinner className="h-4 w-4" /> : 'Ingresar'}
           </Button>
