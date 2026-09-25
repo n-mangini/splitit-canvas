@@ -105,12 +105,11 @@ Los bugs se reportan con Ybug (el boton flotante, solo en el deploy) y llegan a
    por el armado del test.
 5. **Arreglar lo minimo.** Solo el bug: nada de refactors ni limpieza al pasar.
    Correr `pnpm test:e2e` completo; tiene que pasar todo.
-6. **Abrir el PR.** La rama se llama `fix/ybug-<N>`, con `N` el numero del reporte
-   de Ybug (el `#1` de `[splitit-canvas] #1`). El PR lo abre la sesion, no una
-   persona: titulo `Ybug #<N>: <que se arreglo>`, y en el cuerpo la historia, el
-   criterio, el test que lo cubre y el link al hilo. Sin `Closes` (ver arriba).
-   Nunca se mergea desde la sesion.
-7. **Cerrar en el hilo** con el link al PR y el nombre del test que ahora cubre el bug.
+6. **Dejar la rama lista.** Se llama `fix/ybug-<N>`, con `N` el numero del reporte
+   de Ybug (el `#1` de `[splitit-canvas] #1`). El PR lo abre una persona desde el
+   boton del hilo; nunca se mergea desde la sesion. Sin `Closes` (ver arriba).
+7. **Cerrar en el hilo**: que historia y que criterio, que se cambio, y el nombre del
+   test que ahora cubre el bug.
 
 Cada bug arreglado deja su test: asi la suite crece con bugs reales y el mismo bug
 no vuelve.
