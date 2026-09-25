@@ -2,8 +2,10 @@ name: E2E
 
 on:
   pull_request:
+  # Las ramas del agente tambien: su PR lo abre un bot, y un PR abierto por un
+  # bot no dispara el evento pull_request.
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
 
 jobs:
   e2e:
