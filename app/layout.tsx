@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from '@/components/ui/sonner'
+import { YbugWidget } from '@/components/ybug-widget'
 import './globals.css'
 
 const inter = Inter({ 
@@ -53,6 +54,7 @@ export default function RootLayout({
             debajo de 600px, asi que con bottom-right alcanza para los dos. */}
         <Toaster position="bottom-right" theme="light" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        <YbugWidget />
       </body>
     </html>
   )

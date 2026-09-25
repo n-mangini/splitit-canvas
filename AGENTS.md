@@ -82,3 +82,32 @@ grep -rn "primaryButtonClass\|fieldClass\|splitit-card" components app
 - No mostrar avance de desarrollo en el canvas: eso vive en la herramienta del PM.
 - No hablarle al PO de archivos ni de componentes. Se reporta lo que se ve en pantalla y que
   criterio cierra.
+
+## Reportes de QA desde Slack
+
+Los bugs se reportan con Ybug (el boton flotante, solo en el deploy) y llegan a
+`#qa-splitit`. Ahi alguien etiqueta a `@Claude` en el hilo. Este es el trabajo:
+
+1. **Entender el reporte.** El mensaje de Ybug trae un resumen y un link; si el link
+   no abre, trabajar con lo que dice el hilo. Si no alcanza para reproducir, pedir en
+   el hilo los pasos que faltan. No adivinar.
+2. **Ubicar la historia.** La URL del reporte lleva a la pantalla; `lib/prototype-map.ts`
+   dice de que historia es, y la issue en `SplitItLab/roadmap` tiene sus criterios.
+3. **Clasificar**, y decirlo en el hilo antes de tocar nada:
+   - **Bug**: la pantalla contradice un criterio de aceptacion, o esta objetivamente
+     rota (no carga, un boton no hace nada, un numero mal calculado). Se arregla.
+   - **Cambio de alcance**: "estaria bueno que...", o algo que ningun criterio pide.
+     No se toca: se responde que es decision del PO y se termina.
+   - **No reproducible**: se dice que se probo y se piden mas datos.
+4. **Test primero.** Escribir en `e2e/` un test que reproduzca el bug y **falle**,
+   nombrado por el flujo y con la historia en un comentario, como
+   `e2e/detalle-evento.spec.ts`. Correrlo y confirmar que falla por el bug y no
+   por el armado del test.
+5. **Arreglar lo minimo.** Solo el bug: nada de refactors ni limpieza al pasar.
+   Correr `pnpm test:e2e` completo; tiene que pasar todo.
+6. **Cerrar en el hilo**: que historia y que criterio, que se cambio, y el nombre del
+   test que ahora lo cubre. El PR lo crea una persona desde el boton del hilo;
+   nunca se mergea desde la sesion. Si se abre, no lleva `Closes` (ver arriba).
+
+Cada bug arreglado deja su test: asi la suite crece con bugs reales y el mismo bug
+no vuelve.
