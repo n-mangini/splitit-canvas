@@ -112,7 +112,9 @@ Los bugs se reportan con Ybug (el boton flotante, solo en el deploy) y llegan a
    historia, el criterio, el test que lo cubre y el link al hilo. Sin `Closes`
    (ver arriba). Nunca se mergea desde la sesion.
 7. **Cerrar en el hilo**: que historia y que criterio, que se cambio, y el nombre del
-   test que ahora cubre el bug.
+   test que ahora cubre el bug. Avisar que el PR se abre solo desde la rama y **no
+   sugerir el boton "Create PR"** ni pedirle a nadie que abra el PR: si alguien lo
+   aprieta, el PR queda a su nombre.
 
 Cada bug arreglado deja su test: asi la suite crece con bugs reales y el mismo bug
 no vuelve.
