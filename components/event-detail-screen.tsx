@@ -3,6 +3,7 @@
 import type { FormEvent, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   ArrowRight,
@@ -146,7 +147,7 @@ function ExpenseCard({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="rounded-full text-secondary hover:bg-soft-secondary hover:text-secondary"
+                  className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   aria-label={`Eliminar ${expense.name}`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -162,7 +163,7 @@ function ExpenseCard({
                 <AlertDialogFooter>
                   <AlertDialogCancel className="rounded-[18px]">Cancelar</AlertDialogCancel>
                   <AlertDialogAction
-                    className="rounded-[18px] bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                    className="rounded-[18px] bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={onDelete}
                   >
                     Eliminar
@@ -451,6 +452,7 @@ function EventDetail({
       },
       ...current,
     ])
+    toast.success(`Agregamos «${payload.name}»`)
     resetExpenseForm()
     setIsAddExpenseOpen(false)
   }
@@ -492,14 +494,17 @@ function EventDetail({
           : expense
       )
     )
+    toast.success(`Guardamos «${payload.name}»`)
     closeEditExpense()
   }
 
   const handleDeleteExpense = (expenseId: string) => {
+    const deleted = expenses.find((expense) => expense.id === expenseId)
     setExpenses((current) => current.filter((expense) => expense.id !== expenseId))
     if (editingExpenseId === expenseId) {
       closeEditExpense()
     }
+    if (deleted) toast.success(`Eliminamos «${deleted.name}»`)
   }
 
   return (
