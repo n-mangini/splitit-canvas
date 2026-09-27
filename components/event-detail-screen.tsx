@@ -246,28 +246,35 @@ function MemberBalanceRow({ name, amount, currency }: { name: string; amount: nu
 }
 
 /**
- * `full` es el alcance de la pantalla.
+ * `showExpenses` y `showBalances` son el alcance de la pantalla, una por
+ * seccion porque cada una la entrega un grupo de historias distinto.
  *
- * Apagado, se ve lo que entrega SPLT-007: el encabezado del evento, la
+ * Apagadas, se ve lo que entrega SPLT-007: el encabezado del evento, la
  * navegacion entre las tres secciones, y la lista de integrantes. Las
  * secciones Gastos y Saldos quedan con su titulo y nada mas — su contenido
- * es de otras historias (SPLT-011/012 y SPLT-015/016) y todavia no se
- * entrego.
+ * todavia no se entrego.
  *
- * Encendido, se ve la pantalla completa. Vive en una ruta que el canvas no
- * muestra, para no perderla mientras esas historias no llegan. Es la misma
- * pantalla, no una copia: no se pueden desincronizar.
+ * `showExpenses` enciende SPLT-011/012/013/014 (cargar, listar, editar y
+ * eliminar gastos). `showBalances` enciende SPLT-015/016 (saldo por
+ * integrante y pagos sugeridos) y depende de que haya gastos para mostrar
+ * algo, asi que no tiene sentido sin `showExpenses`.
+ *
+ * Encendidas, viven en una ruta que el canvas no muestra todavia, para no
+ * perder el trabajo mientras esas historias no llegan. Es la misma pantalla,
+ * no una copia: no se pueden desincronizar.
  */
 export function EventDetailScreen({
   eventId,
   empty = false,
   initialTab = 'expenses',
-  full = false,
+  showExpenses = false,
+  showBalances = false,
 }: {
   eventId: string
   empty?: boolean
   initialTab?: TabValue
-  full?: boolean
+  showExpenses?: boolean
+  showBalances?: boolean
 }) {
   const event = mockEvents.find((item) => item.id === eventId)
   if (!event) {
@@ -296,7 +303,8 @@ export function EventDetailScreen({
       event={event}
       empty={empty}
       initialTab={initialTab}
-      full={full}
+      showExpenses={showExpenses}
+      showBalances={showBalances}
     />
   )
 }
@@ -305,12 +313,14 @@ function EventDetail({
   event,
   empty,
   initialTab,
-  full,
+  showExpenses,
+  showBalances,
 }: {
   event: Event
   empty: boolean
   initialTab: TabValue
-  full: boolean
+  showExpenses: boolean
+  showBalances: boolean
 }) {
   const [expenses, setExpenses] = useState<Expense[]>(empty ? [] : event.expenses)
   const [participants, setParticipants] = useState<Event['participants']>(event.participants)
@@ -562,11 +572,11 @@ function EventDetail({
             {/* Cargar y listar gastos es SPLT-011 y SPLT-012. Sin ellas, la
                 seccion muestra el estado vacio: es lo que ve cualquiera que
                 abre un evento sin gastos, no un hueco a la espera de codigo. */}
-            {!full && <EmptyState
+            {!showExpenses && <EmptyState
                   title="Todavia no hay gastos"
                   description="Cuando cargues gastos, van a aparecer aca para revisar quien pago y cuanto corresponde."
                 />}
-            {full && (
+            {showExpenses && (
               <>
               {/* Sin gastos, el total es un "$ 0" que no informa nada y le come
                   lugar al unico mensaje que importa ahi: que todavia no hay
@@ -743,7 +753,7 @@ function EventDetail({
             // La segunda columna es la del saldo por integrante. Sin ella la
             // seccion es de una sola columna: si no, el ancho queda reservado
             // igual y la tarjeta se ve cortada al medio en desktop.
-            full && 'lg:grid-cols-[minmax(0,1fr)_380px]'
+            showBalances && 'lg:grid-cols-[minmax(0,1fr)_380px]'
           )}
         >
           <div className="min-w-0 space-y-5">
@@ -753,14 +763,14 @@ function EventDetail({
 
             {/* Saldo por integrante es SPLT-015 y pagos sugeridos SPLT-016.
                 Sin ellas, la seccion muestra su estado vacio. */}
-            {!full && (
+            {!showBalances && (
               <EmptyState
                 title="Todavia no hay saldos"
                 description="Cuando el evento tenga gastos cargados, aca vas a ver cuanto le corresponde a cada integrante."
               />
             )}
             {/* Pagos sugeridos es SPLT-016. */}
-            {full && (
+            {showBalances && (
               <>
               <div className="space-y-3">
                 <h3 className="text-base font-black text-foreground">Pagos sugeridos</h3>
@@ -789,7 +799,7 @@ function EventDetail({
           </div>
 
           {/* Saldo por integrante es SPLT-015. */}
-          {full && (
+          {showBalances && (
             <>
             <aside className="splitit-card min-w-0 space-y-2 p-3 lg:sticky lg:top-28">
               <h3 className="px-1 pb-1 text-base font-black text-foreground">Saldo por integrante</h3>
@@ -808,7 +818,7 @@ function EventDetail({
       )}
 
       {/* Editar y eliminar gasto son SPLT-013 y SPLT-014. */}
-      {full && (
+      {showExpenses && (
         <>
         <Dialog
           open={editingExpenseId !== null}

@@ -102,16 +102,26 @@ export const screens: Screen[] = [
     stories: [{ id: 'SPLT-021', title: 'Eliminar evento', issue: 21 }],
   },
   {
-    // La pantalla completa, con gastos y saldos. Su contenido es de historias
-    // que todavia no se entregaron, asi que no esta en el canvas: queda
-    // parqueada bajo ellas y se muestra cuando les toque. Es la misma pantalla
-    // que /events/event-1 con el alcance completo, no una copia.
-    route: '/events/event-1/completo',
-    title: 'Detalle de evento · completo',
+    route: '/events/event-1/gastos',
+    title: 'Detalle de evento · gastos',
     epic: 'Eventos',
     stories: [
       { id: 'SPLT-011', title: 'Registrar gasto', issue: 11 },
       { id: 'SPLT-012', title: 'Consultar gastos del evento', issue: 12 },
+      { id: 'SPLT-013', title: 'Modificar gasto', issue: 13 },
+      { id: 'SPLT-014', title: 'Eliminar gasto', issue: 14 },
+    ],
+  },
+  {
+    // La pantalla completa, con gastos y saldos. El contenido de Saldos es de
+    // historias que todavia no se entregaron, asi que no esta en el canvas:
+    // queda parqueada bajo ellas y se muestra cuando les toque. Es la misma
+    // pantalla que /events/event-1/gastos con Saldos tambien encendido, no
+    // una copia.
+    route: '/events/event-1/completo',
+    title: 'Detalle de evento · completo',
+    epic: 'Eventos',
+    stories: [
       { id: 'SPLT-015', title: 'Consultar saldo por integrante', issue: 15 },
       { id: 'SPLT-016', title: 'Consultar pagos sugeridos', issue: 16 },
     ],
