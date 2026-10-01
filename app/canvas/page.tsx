@@ -64,8 +64,8 @@ export default function CanvasPage() {
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 13,
-                background: viewport === key ? '#21B894' : 'transparent',
-                color: viewport === key ? '#04221B' : '#B4BBC8',
+                background: viewport === key ? '#8B5CF6' : 'transparent',
+                color: viewport === key ? '#fff' : '#B4BBC8',
                 fontWeight: viewport === key ? 600 : 400,
               }}
             >
@@ -85,7 +85,7 @@ export default function CanvasPage() {
             step={0.02}
             value={scale}
             onChange={(event) => setScale(Number(event.target.value))}
-            style={{ width: 120, accentColor: '#21B894' }}
+            style={{ width: 120, accentColor: '#8B5CF6' }}
           />
           <span style={{ width: 34, textAlign: 'right', color: '#E8ECF2' }}>
             {Math.round(scale * 100)}%
