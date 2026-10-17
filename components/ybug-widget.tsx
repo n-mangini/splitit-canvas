@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
+import { createYbugDiagnostics } from '@/lib/ybug-diagnostics'
 
 declare global {
   interface Window {
-    ybug_settings?: { id: string }
+    ybug_settings?: { id: string } & Partial<ReturnType<typeof createYbugDiagnostics>>
   }
 }
 
@@ -21,7 +22,10 @@ export function YbugWidget() {
     const id = process.env.NEXT_PUBLIC_YBUG_ID
     if (!id || window.self !== window.top || window.ybug_settings) return
 
-    window.ybug_settings = { id }
+    const diagnostics = process.env.NEXT_PUBLIC_YBUG_DIAGNOSTICS === 'true'
+      ? createYbugDiagnostics(() => sessionStorage.getItem('splitit:ybug-diagnostics') === 'true')
+      : {}
+    window.ybug_settings = { id, ...diagnostics }
     const script = document.createElement('script')
     script.async = true
     script.src = `https://widget.ybug.io/button/${id}.js`
