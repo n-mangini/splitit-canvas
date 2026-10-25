@@ -13,9 +13,13 @@ import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
 import { cn } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 
+// Mensajes de SPLT-019. Cada uno tiene su variante de la pantalla por query
+// (`?google=error`, `?google=cuenta-google`) para poder verlo en el canvas.
+const GOOGLE_ERROR = 'No pudimos completar el ingreso con Google'
+const GOOGLE_ACCOUNT = 'Esta cuenta ahora ingresa con Google'
 
 function LoginFallback() {
-  return <div className="min-h-screen bg-[#fcfcfe]" />
+  return <div className="min-h-screen bg-primary-foreground" />
 }
 
 function LoginContent() {
@@ -26,7 +30,11 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const [error, setError] = useState('')
+  const googleState = searchParams.get('google')
+  const isGoogleAccount = googleState === 'cuenta-google'
+  const [error, setError] = useState(
+    googleState === 'error' ? GOOGLE_ERROR : isGoogleAccount ? GOOGLE_ACCOUNT : ''
+  )
 
   const handleGoogle = async () => {
     setError('')
@@ -54,6 +62,13 @@ function LoginContent() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
 
+    // La cuenta ya ingresa con Google: la contraseña no vale
+    if (isGoogleAccount) {
+      setError(GOOGLE_ACCOUNT)
+      setIsLoading(false)
+      return
+    }
+
     const redirect = searchParams.get('redirect')
     router.push(redirect ?? '/events')
   }
@@ -65,7 +80,7 @@ function LoginContent() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="email" className="text-sm font-medium text-[#0f172a]">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">
               Email
             </Label>
             <Input
@@ -80,7 +95,7 @@ function LoginContent() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="password" className="text-sm font-medium text-[#0f172a]">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
               Contraseña
             </Label>
             <div className="relative">
@@ -96,7 +111,7 @@ function LoginContent() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#0f172a]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -123,7 +138,7 @@ function LoginContent() {
           />
         </div>
 
-        <p className="text-center text-sm text-[#868992]">
+        <p className="text-center text-sm text-muted-foreground">
           ¿No tenés cuenta?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
             Registrate gratis

@@ -8,21 +8,12 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Check, LogOut } from 'lucide-react'
 import { mockCurrentUser } from '@/lib/mock-data'
+import { PersonAvatar } from '@/components/person-avatar'
 import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
 import { cn } from '@/lib/utils'
 
 // Emails ya tomados por otras cuentas (mock hasta que exista backend)
 const takenEmails = ['sofi@email.com', 'tomi@email.com', 'lau@email.com']
-
-function initials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map(part => part[0] ?? '')
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -70,29 +61,24 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-[10px]">
-      <h1 className="text-[40px] font-extrabold leading-[1.15] text-[#001625] sm:text-[60px]">
+      <h1 className="text-[40px] font-extrabold leading-[1.15] text-foreground sm:text-[60px]">
         Tu perfil
       </h1>
-      <p className="text-sm font-medium text-[#868992]">Configura las preferencias de tu perfil</p>
+      <p className="text-sm font-medium text-muted-foreground">Configura las preferencias de tu perfil</p>
 
       {/* Informacion personal */}
-      <section className="flex w-full flex-col gap-4 rounded-[24px] border border-[#cfd6dc] bg-[#fefefe] p-6 sm:p-8">
+      <section className="flex w-full flex-col gap-4 rounded-[24px] border border-border bg-card p-6 sm:p-8">
         <div className="flex items-center gap-4">
-          <div
-            aria-hidden
-            className="flex size-14 shrink-0 items-center justify-center rounded-[16px] bg-[#effaf6] text-lg font-extrabold text-primary"
-          >
-            {initials(account.name) || 'S'}
-          </div>
+          <PersonAvatar name={account.name} shape="square" size="lg" tone="receives" />
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-extrabold text-[#001625] sm:text-[32px]">
+            <h2 className="truncate text-2xl font-extrabold text-foreground sm:text-[32px]">
               {account.name}
             </h2>
-            <p className="truncate text-sm font-medium text-[#868992]">{account.email}</p>
+            <p className="truncate text-sm font-medium text-muted-foreground">{account.email}</p>
           </div>
         </div>
 
-        <p className="text-sm font-medium text-[#868992]">Actualiza tu informacion personal</p>
+        <p className="text-sm font-medium text-muted-foreground">Actualiza tu informacion personal</p>
 
         <div className="grid w-full gap-6 pb-0.5 lg:grid-cols-2 lg:gap-8">
           <div className="flex flex-col gap-[6px]">
@@ -155,26 +141,26 @@ export default function ProfilePage() {
       </section>
 
       {/* Sesion */}
-      <section className="flex w-full flex-col gap-4 rounded-[24px] border border-[#cfd6dc] bg-[#fefefe] p-6 sm:p-8">
+      <section className="flex w-full flex-col gap-4 rounded-[24px] border border-border bg-card p-6 sm:p-8">
         <div className="flex items-center gap-[10px]">
-          <LogOut className="size-6 text-[#001625]" />
-          <h2 className="text-base font-extrabold text-[#001625]">Sesion</h2>
+          <LogOut className="size-6 text-foreground" />
+          <h2 className="text-base font-extrabold text-foreground">Sesion</h2>
         </div>
-        <p className="text-sm font-medium text-[#868992]">
+        <p className="text-sm font-medium text-muted-foreground">
           Tu cuenta y tus eventos se mantienen; podes volver a entrar cuando quieras
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-[489px]">
             <p className="text-base font-extrabold text-black">Cerrar sesion</p>
-            <p className="mt-2 text-sm font-medium text-[#868992]">
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
               Salir de tu cuenta en este dispositivo
             </p>
           </div>
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="h-10 shrink-0 gap-[10px] rounded-[8px] bg-[#f1f5f9] px-4 text-xl font-medium text-[#001625] hover:bg-[#e2e8f0]"
+            className="h-10 shrink-0 gap-[10px] rounded-[8px] bg-muted px-4 text-xl font-medium text-foreground hover:bg-muted-strong"
           >
             Cerrar sesion
             <LogOut className="size-6" />

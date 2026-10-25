@@ -84,10 +84,10 @@ export function CreateEventDialog() {
       <DialogContent
         aria-describedby={undefined}
         showCloseButton={false}
-        className="flex max-h-[90vh] flex-col gap-4 overflow-y-auto rounded-[24px] border-[#cfd6dc] bg-[#fefefe] p-6 shadow-none sm:max-w-[576px] sm:p-8"
+        className="flex max-h-[90vh] flex-col gap-4 overflow-y-auto rounded-[24px] border-border bg-card p-6 shadow-none sm:max-w-[576px] sm:p-8"
       >
         <div className="flex items-start justify-between gap-3">
-          <DialogTitle className="text-[32px] font-extrabold leading-[1.15] text-[#001625]">
+          <DialogTitle className="text-[32px] font-extrabold leading-[1.15] text-foreground">
             Crear evento
           </DialogTitle>
           {/* Cruz propia: la del Dialog es un icono de 16px sin area tactil. */}
@@ -95,7 +95,7 @@ export function CreateEventDialog() {
             type="button"
             onClick={close}
             aria-label="Cerrar"
-            className="-mr-2 -mt-1 flex size-10 shrink-0 items-center justify-center rounded-[8px] text-[#868992] transition-colors hover:bg-[#f1f5f9] hover:text-[#001625]"
+            className="-mr-2 -mt-1 flex size-10 shrink-0 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="size-5" />
           </button>
@@ -107,15 +107,15 @@ export function CreateEventDialog() {
           <Popover open={isIconPickerOpen} onOpenChange={setIsIconPickerOpen}>
             <PopoverTrigger asChild>
               <button type="button" className="group relative w-fit" aria-label="Cambiar icono del evento">
-                <span className="flex size-14 items-center justify-center rounded-[16px] bg-[#effaf6] text-primary">
+                <span className="flex size-14 items-center justify-center rounded-[16px] bg-soft-primary text-primary">
                   <Icon className="size-6" />
                 </span>
-                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border border-[#cfd6dc] bg-[#fefefe] text-[#001625] transition-transform group-hover:scale-110">
+                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border border-border bg-card text-foreground transition-transform group-hover:scale-110">
                   <Pencil className="size-3" />
                 </span>
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto rounded-[16px] border-[#cfd6dc] p-3">
+            <PopoverContent align="start" className="w-auto rounded-[16px] border-border p-3">
               <div className="grid grid-cols-4 gap-2">
                 {eventIcons.map((option) => (
                   <button
@@ -130,8 +130,8 @@ export function CreateEventDialog() {
                     className={cn(
                       'flex size-12 items-center justify-center rounded-[12px] transition-colors',
                       option.value === icon
-                        ? 'bg-[#effaf6] text-primary'
-                        : 'text-[#868992] hover:bg-[#f1f5f9]'
+                        ? 'bg-soft-primary text-primary'
+                        : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
                     <option.Icon className="size-5" />
@@ -164,7 +164,7 @@ export function CreateEventDialog() {
 
           <div className="flex flex-col gap-[6px]">
             <Label htmlFor="event-description" className="text-base font-extrabold text-black">
-              Descripcion <span className="font-medium text-[#868992]">(opcional)</span>
+              Descripcion <span className="font-medium text-muted-foreground">(opcional)</span>
             </Label>
             <Textarea
               id="event-description"
@@ -178,7 +178,7 @@ export function CreateEventDialog() {
           <div className="flex flex-col gap-[6px]">
             <Label className="text-base font-extrabold text-black">Moneda del evento</Label>
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="h-10 w-fit gap-2 rounded-[8px] border-0 bg-[#f1f5f9] px-4 text-base font-medium text-[#001625]">
+              <SelectTrigger className="h-10 w-fit gap-2 rounded-[8px] border-0 bg-muted px-4 text-base font-medium text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-[16px]">
@@ -195,7 +195,7 @@ export function CreateEventDialog() {
             <Label htmlFor="event-member" className="text-base font-extrabold text-black">
               Integrantes
             </Label>
-            <p className="text-sm font-medium text-[#868992]">
+            <p className="text-sm font-medium text-muted-foreground">
               Las personas que entren al evento lo haran con alguno de estos nombres
             </p>
 
@@ -229,10 +229,10 @@ export function CreateEventDialog() {
             {/* El Figma no dibuja esta lista, pero sin ella no se ve al creador
                 precargado ni hay forma de sacar a alguien recien agregado. */}
             <ul className="mt-1 flex flex-col gap-1">
-              <li className="flex items-center justify-between gap-2 rounded-[8px] bg-[#f8fafc] py-1 pl-3 pr-1">
-                <span className="truncate text-sm font-medium text-[#001625]">
+              <li className="flex items-center justify-between gap-2 rounded-[8px] bg-background py-1 pl-3 pr-1">
+                <span className="truncate text-sm font-medium text-foreground">
                   {mockCurrentUser.name}
-                  <span className="ml-2 text-sm font-medium text-[#868992]">vos</span>
+                  <span className="ml-2 text-sm font-medium text-muted-foreground">vos</span>
                 </span>
                 <span className="flex size-9 shrink-0 items-center justify-center text-primary">
                   <Check className="size-4" />
@@ -241,14 +241,14 @@ export function CreateEventDialog() {
               {members.map((member) => (
                 <li
                   key={member}
-                  className="flex items-center justify-between gap-2 rounded-[8px] bg-[#f8fafc] py-1 pl-3 pr-1"
+                  className="flex items-center justify-between gap-2 rounded-[8px] bg-background py-1 pl-3 pr-1"
                 >
-                  <span className="truncate text-sm font-medium text-[#001625]">{member}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{member}</span>
                   <button
                     type="button"
                     onClick={() => setMembers(members.filter((item) => item !== member))}
                     aria-label={`Quitar a ${member}`}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-[6px] text-[#868992] transition-colors hover:bg-[#e2e8f0] hover:text-destructive"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted-strong hover:text-destructive"
                   >
                     <X className="size-4" />
                   </button>

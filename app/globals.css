@@ -5,22 +5,22 @@
 
 :root {
   --background: #f8fafc;
-  --foreground: #071b3a;
-  --card: #ffffff;
-  --card-foreground: #071b3a;
+  --foreground: #001625;
+  --card: #fefefe;
+  --card-foreground: #001625;
   --popover: #ffffff;
-  --popover-foreground: #071b3a;
+  --popover-foreground: #001625;
   --primary: #21b894;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #fcfcfe;
   --secondary: #8b5cf6;
   --secondary-foreground: #ffffff;
-  --muted: #eef3f8;
-  --muted-foreground: #7b8494;
-  --accent: #e8faf5;
-  --accent-foreground: #071b3a;
+  --muted: #f1f5f9;
+  --muted-foreground: #868992;
+  --accent: #effaf6;
+  --accent-foreground: #001625;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e8ecf2;
+  --border: #cfd6dc;
   --input: #ffffff;
   --ring: #21b894;
   --chart-1: #21b894;
@@ -37,45 +37,18 @@
   --sidebar-accent-foreground: #071b3a;
   --sidebar-border: #e8ecf2;
   --sidebar-ring: #21b894;
+  --muted-strong: #e2e8f0;
+  --soft-primary: #effaf6;
+  --soft-secondary: #f0e9ff;
+  --soft-info: #eaf4ff;
+  --info: #2d9cdb;
+  --placeholder: #94a3b8;
   --success: #21b894;
   --success-foreground: #ffffff;
   --warning: #8b5cf6;
   --warning-foreground: #ffffff;
 }
 
-.dark {
-  --background: #f8fafc;
-  --foreground: #071b3a;
-  --card: #ffffff;
-  --card-foreground: #071b3a;
-  --popover: #ffffff;
-  --popover-foreground: #071b3a;
-  --primary: #21b894;
-  --primary-foreground: #ffffff;
-  --secondary: #8b5cf6;
-  --secondary-foreground: #ffffff;
-  --muted: #eef3f8;
-  --muted-foreground: #7b8494;
-  --accent: #e8faf5;
-  --accent-foreground: #071b3a;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e8ecf2;
-  --input: #ffffff;
-  --ring: #21b894;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #071b3a;
-  --sidebar-primary: #21b894;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8faf5;
-  --sidebar-accent-foreground: #071b3a;
-  --sidebar-border: #e8ecf2;
-  --sidebar-ring: #21b894;
-  --success: #21b894;
-  --success-foreground: #ffffff;
-  --warning: #8b5cf6;
-  --warning-foreground: #ffffff;
-}
 
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback', system-ui, sans-serif;
@@ -116,6 +89,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-muted-strong: var(--muted-strong);
+  --color-soft-primary: var(--soft-primary);
+  --color-soft-secondary: var(--soft-secondary);
+  --color-soft-info: var(--soft-info);
+  --color-info: var(--info);
+  --color-placeholder: var(--placeholder);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -132,9 +111,9 @@
 }
 
 @layer utilities {
-  /* Card del sistema, tal como quedo en perfil al aplicar el Figma: sin
-     sombra y con el borde gris del diseno, no el token generico. */
+  /* Card del sistema: sin sombra, borde gris del diseno. Los tokens ya valen
+     lo que vale el diseno, asi que sale de ahi y no de hex sueltos. */
   .splitit-card {
-    @apply rounded-[24px] border border-[#cfd6dc] bg-[#fefefe];
+    @apply rounded-[24px] border border-border bg-card;
   }
 }

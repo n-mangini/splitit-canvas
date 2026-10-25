@@ -8,7 +8,7 @@ export function AuthSplitLayout({
   topRight?: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen items-stretch bg-[#fcfcfe]">
+    <div className="flex min-h-screen items-stretch bg-primary-foreground">
       {/* Imagen (mitad izquierda, oculta en mobile) */}
       <div className="relative hidden w-1/2 shrink-0 lg:block">
         <Image
@@ -36,7 +36,7 @@ export function AuthHeading({ title, subtitle }: { title: string; subtitle: stri
   return (
     <div className="flex flex-col items-center justify-center gap-2 text-center">
       <h1 className="text-[32px] font-extrabold text-black">{title}</h1>
-      <p className="text-sm font-medium text-[#868992]">{subtitle}</p>
+      <p className="text-sm font-medium text-muted-foreground">{subtitle}</p>
     </div>
   )
 }

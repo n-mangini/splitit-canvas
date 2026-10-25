@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { LockedPrototypeFrame } from '@/components/locked-prototype-frame'
-import { allStories, findStory, issueUrl, screensOfStory } from '@/lib/prototype-map'
+import { allStories, assetsOfStory, findStory, issueUrl, screensOfStory } from '@/lib/prototype-map'
 
 export function generateStaticParams() {
   return allStories.map((story) => ({ story: story.id }))
@@ -26,6 +26,7 @@ export default async function StoryPage({ params, searchParams }: Props) {
 
   const { story } = found
   const states = screensOfStory(story.id)
+  const assets = assetsOfStory(story.id)
   const index = Number(estado)
   const screen = states[Number.isInteger(index) && states[index] ? index : 0]
 
@@ -144,6 +145,41 @@ export default async function StoryPage({ params, searchParams }: Props) {
             title={`${story.id} · ${screen.title}`}
           />
         </div>
+
+        {assets.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 8,
+              maxWidth: 1440,
+              margin: '16px auto 0',
+            }}
+          >
+            <span style={{ fontSize: 12, color: '#8B93A3' }}>
+              Arte de la pantalla, para llevarse:
+            </span>
+            {assets.map((asset) => (
+              <a
+                key={asset}
+                href={asset}
+                download
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: '1px solid #343945',
+                  background: '#252932',
+                  color: '#E8ECF2',
+                  fontSize: 12,
+                  textDecoration: 'none',
+                }}
+              >
+                {asset.split('/').pop()} ↓
+              </a>
+            ))}
+          </div>
+        )}
 
         <p style={{ maxWidth: 720, margin: '20px auto 0', fontSize: 12, color: '#6B7383' }}>
           La pantalla de arriba es interactiva, pero queda contenida acá: los controles
