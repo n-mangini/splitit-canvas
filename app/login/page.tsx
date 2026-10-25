@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthHeading, AuthSplitLayout } from '@/components/auth-split-layout'
+import { AuthDivider, GoogleAuthButton } from '@/components/google-auth-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,6 +13,10 @@ import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
 import { cn } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 
+// Mensajes de SPLT-019. Cada uno tiene su variante de la pantalla por query
+// (`?google=error`, `?google=cuenta-google`) para poder verlo en el canvas.
+const GOOGLE_ERROR = 'No pudimos completar el ingreso con Google'
+const GOOGLE_ACCOUNT = 'Esta cuenta ahora ingresa con Google'
 
 function LoginFallback() {
   return <div className="min-h-screen bg-primary-foreground" />
@@ -24,7 +29,23 @@ function LoginContent() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const googleState = searchParams.get('google')
+  const isGoogleAccount = googleState === 'cuenta-google'
+  const [error, setError] = useState(
+    googleState === 'error' ? GOOGLE_ERROR : isGoogleAccount ? GOOGLE_ACCOUNT : ''
+  )
+
+  const handleGoogle = async () => {
+    setError('')
+    setIsGoogleLoading(true)
+
+    // Simulate the round trip through Google
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    const redirect = searchParams.get('redirect')
+    router.push(redirect ?? '/events')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +61,13 @@ function LoginContent() {
 
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // La cuenta ya ingresa con Google: la contraseña no vale
+    if (isGoogleAccount) {
+      setError(GOOGLE_ACCOUNT)
+      setIsLoading(false)
+      return
+    }
 
     const redirect = searchParams.get('redirect')
     router.push(redirect ?? '/events')
@@ -94,12 +122,21 @@ function LoginContent() {
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
             className={cn(primaryButtonClass, 'w-full')}
           >
             {isLoading ? <Spinner className="h-4 w-4" /> : 'Ingresar'}
           </Button>
         </form>
+
+        <div className="flex flex-col gap-[10px]">
+          <AuthDivider />
+          <GoogleAuthButton
+            onClick={handleGoogle}
+            isLoading={isGoogleLoading}
+            disabled={isLoading}
+          />
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           ¿No tenés cuenta?{' '}

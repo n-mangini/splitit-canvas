@@ -47,13 +47,37 @@ export const screens: Screen[] = [
     route: '/register',
     title: 'Registrarse',
     epic: 'Acceso',
-    stories: [{ id: 'SPLT-001', title: 'Registrarse', issue: 1 }],
+    stories: [
+      { id: 'SPLT-001', title: 'Registrarse', issue: 1 },
+      { id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 },
+    ],
   },
   {
     route: '/login',
     title: 'Iniciar sesión',
     epic: 'Acceso',
-    stories: [{ id: 'SPLT-002', title: 'Iniciar sesión', issue: 2 }],
+    stories: [
+      { id: 'SPLT-002', title: 'Iniciar sesión', issue: 2 },
+      { id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 },
+    ],
+  },
+  {
+    // Volver de Google sin completar el ingreso: cancelo o rechazo el permiso.
+    // Es el mismo login con el mensaje encendido por query, no una copia.
+    route: '/login?google=error',
+    title: 'Iniciar sesión · Google no completó',
+    epic: 'Acceso',
+    stories: [{ id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 }],
+    hidden: true,
+  },
+  {
+    // Email y contraseña sobre una cuenta que ya ingresa con Google. Mismo
+    // login con el flag por query: el mensaje sale tambien al reintentar.
+    route: '/login?google=cuenta-google',
+    title: 'Iniciar sesión · cuenta de Google',
+    epic: 'Acceso',
+    stories: [{ id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 }],
+    hidden: true,
   },
   {
     route: '/profile',
