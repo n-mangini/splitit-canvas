@@ -3,17 +3,18 @@
  *
  * Vive en un solo lugar porque la misma pieza aparece en /login y /register: el
  * primer criterio de la historia pide que las dos pantallas ofrezcan la opcion.
- * Si cambia el copy o el peso visual del boton, cambia para las dos.
+ *
+ * No sigue el estilo de la app a proposito: el front usa el boton oficial de
+ * Google Identity Services, que no se puede estilizar. Esto lo imita con la
+ * combinacion elegida por el PO: tema `outline`, tamaño `large`, texto
+ * `continue_with`, forma `rectangular`, a lo ancho del formulario.
  */
 
-import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { secondaryButtonClass } from '@/lib/form-styles'
-import { cn } from '@/lib/utils'
 
 function GoogleLogo() {
   return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" className="size-5">
+    <svg viewBox="0 0 48 48" aria-hidden="true" className="size-[18px]">
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
@@ -38,9 +39,9 @@ function GoogleLogo() {
 export function AuthDivider() {
   return (
     <div className="flex items-center gap-3" aria-hidden="true">
-      <span className="h-px flex-1 bg-[#e2e8f0]" />
-      <span className="text-sm font-medium text-[#868992]">o</span>
-      <span className="h-px flex-1 bg-[#e2e8f0]" />
+      <span className="h-px flex-1 bg-muted-strong" />
+      <span className="text-sm font-medium text-muted-foreground">o</span>
+      <span className="h-px flex-1 bg-muted-strong" />
     </div>
   )
 }
@@ -55,21 +56,16 @@ export function GoogleAuthButton({
   disabled?: boolean
 }) {
   return (
-    <Button
+    <button
       type="button"
-      variant="outline"
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={cn(secondaryButtonClass, 'w-full')}
+      className="relative flex h-10 w-full items-center justify-center rounded-[4px] border border-[#dadce0] bg-white px-3 font-['Roboto',arial,sans-serif] text-sm font-medium tracking-[0.25px] text-[#3c4043] transition-colors hover:border-[#d2e3fc] hover:bg-[#f8faff] focus-visible:border-[#d2e3fc] focus-visible:bg-[#f8faff] focus-visible:outline-none disabled:cursor-default disabled:opacity-60"
     >
-      {isLoading ? (
-        <Spinner className="h-4 w-4" />
-      ) : (
-        <>
-          <GoogleLogo />
-          Continuar con Google
-        </>
-      )}
-    </Button>
+      <span className="absolute left-3 flex size-[18px] items-center justify-center">
+        {isLoading ? <Spinner className="size-4 text-[#3c4043]" /> : <GoogleLogo />}
+      </span>
+      <span className="truncate px-6">Continuar con Google</span>
+    </button>
   )
 }
