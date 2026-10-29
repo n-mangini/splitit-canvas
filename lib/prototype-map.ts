@@ -30,6 +30,12 @@ export type Screen = {
   assets?: string[]
 }
 
+// Las pantallas son las del front oficial (SplitItLab/SplitIt, rama main),
+// con sus mismas direcciones. Los estados que el oficial resuelve adentro de
+// la pantalla (un modal, una pestaña, una lista vacia) se piden por query:
+// ver `lib/canvas-state.ts` y `lib/mock-api.ts`.
+const TOKEN = 'r7Qk2Vx9mLpZ4tHnCwB3sd'
+
 export const screens: Screen[] = [
   {
     // La landing es la home del front, pero en el prototipo `/` abre el canvas.
@@ -37,11 +43,7 @@ export const screens: Screen[] = [
     title: 'Landing',
     epic: 'Acceso',
     stories: [{ id: 'SPLT-018', title: 'Landing page', issue: 18 }],
-    assets: [
-      '/landing/fondo-desktop.svg',
-      '/landing/fondo-mobile.svg',
-      '/landing/saldo-por-integrante.png',
-    ],
+    assets: ['/landing/fondo-desktop.svg', '/landing/fondo-mobile.svg'],
   },
   {
     route: '/register',
@@ -63,7 +65,6 @@ export const screens: Screen[] = [
   },
   {
     // Volver de Google sin completar el ingreso: cancelo o rechazo el permiso.
-    // Es el mismo login con el mensaje encendido por query, no una copia.
     route: '/login?google=error',
     title: 'Iniciar sesión · Google no completó',
     epic: 'Acceso',
@@ -71,8 +72,7 @@ export const screens: Screen[] = [
     hidden: true,
   },
   {
-    // Email y contraseña sobre una cuenta que ya ingresa con Google. Mismo
-    // login con el flag por query: el mensaje sale tambien al reintentar.
+    // Email y contraseña sobre una cuenta que ya ingresa con Google.
     route: '/login?google=cuenta-google',
     title: 'Iniciar sesión · cuenta de Google',
     epic: 'Acceso',
@@ -80,7 +80,7 @@ export const screens: Screen[] = [
     hidden: true,
   },
   {
-    route: '/profile',
+    route: '/perfil',
     title: 'Mi cuenta',
     epic: 'Cuenta',
     stories: [
@@ -89,44 +89,44 @@ export const screens: Screen[] = [
     ],
   },
   {
-    route: '/events/new',
+    route: '/eventos?modal=crear',
     title: 'Crear evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-005', title: 'Crear evento', issue: 5 }],
   },
   {
-    route: '/events',
+    route: '/eventos',
     title: 'Mis eventos',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-006', title: 'Consultar mis eventos', issue: 6 }],
   },
   {
-    route: '/events/empty',
+    route: '/eventos?escenario=vacio',
     title: 'Mis eventos · vacío',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-006', title: 'Consultar mis eventos', issue: 6 }],
     hidden: true,
   },
   {
-    route: '/events/event-1',
+    route: '/eventos/1',
     title: 'Detalle de evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
   },
   {
-    route: '/events/event-1/edit',
+    route: '/eventos/1?modal=editar',
     title: 'Editar evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-020', title: 'Editar evento', issue: 20 }],
   },
   {
-    route: '/events/event-1/delete',
+    route: '/eventos/1?modal=eliminar',
     title: 'Eliminar evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-021', title: 'Eliminar evento', issue: 21 }],
   },
   {
-    route: '/events/event-1/gastos',
+    route: '/eventos/1?tab=gastos',
     title: 'Detalle de evento · gastos',
     epic: 'Eventos',
     stories: [
@@ -137,43 +137,41 @@ export const screens: Screen[] = [
     ],
   },
   {
-    // La pantalla completa, con gastos y saldos. El contenido de Saldos es de
-    // historias que todavia no se entregaron, asi que no esta en el canvas:
-    // queda parqueada bajo ellas y se muestra cuando les toque. Es la misma
-    // pantalla que /events/event-1/gastos con Saldos tambien encendido, no
-    // una copia.
-    route: '/events/event-1/completo',
-    title: 'Detalle de evento · completo',
+    route: '/eventos/1?modal=gasto',
+    title: 'Agregar gasto',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-011', title: 'Registrar gasto', issue: 11 }],
+    hidden: true,
+  },
+  {
+    route: '/eventos/1?tab=saldos',
+    title: 'Detalle de evento · saldos',
     epic: 'Eventos',
     stories: [
       { id: 'SPLT-015', title: 'Consultar saldo por integrante', issue: 15 },
       { id: 'SPLT-016', title: 'Consultar pagos sugeridos', issue: 16 },
     ],
-    hidden: true,
   },
   {
     // Cualquier evento que el usuario no pueda abrir cae aca: no existe, o no
-    // es suyo. Comparten pantalla a proposito. El id de la ruta se ve en la
-    // barra del navegador, asi que se eligio uno que se lea.
-    route: '/events/evento-inexistente',
+    // es suyo. Comparten pantalla a proposito.
+    route: '/eventos/evento-inexistente',
     title: 'Detalle de evento · sin acceso',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-007', title: 'Ver detalle de evento', issue: 7 }],
     hidden: true,
   },
   {
-    // Compartir el enlace es un modal sobre el detalle, como editar y eliminar.
-    // Solo lo ve el dueño: un integrante cualquiera no tiene el boton.
-    route: '/events/event-1/invitar',
+    // Compartir el enlace es un modal sobre el detalle. Solo lo ve el dueño.
+    route: '/eventos/1?modal=invitar',
     title: 'Compartir enlace',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
   },
   {
-    // El token de la ruta es opaco a proposito: quien entra sin cuenta maneja
-    // los gastos del evento, asi que el enlace no puede ser adivinable.
-    // Decision del PO del 2026-09-17.
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd',
+    // El token es opaco a proposito: quien entra sin cuenta maneja los gastos
+    // del evento, asi que el enlace no puede ser adivinable.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion`,
     title: 'Acceso por enlace',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
@@ -181,8 +179,8 @@ export const screens: Screen[] = [
   },
   {
     // Un enlace que no corresponde a ningun evento: roto, viejo, o de un
-    // evento eliminado. Cualquier token que no exista cae aca.
-    route: '/join/enlace-invalido',
+    // evento eliminado.
+    route: '/eventos/invitacion/enlace-invalido',
     title: 'Acceso por enlace · enlace inválido',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-008', title: 'Compartir enlace de acceso al evento', issue: 8 }],
@@ -191,41 +189,54 @@ export const screens: Screen[] = [
   {
     // Entrar sin cuenta tambien pasa por identificarse: si no, el invitado
     // carga gastos en nombre de cualquiera y no tiene saldo propio.
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/quien-sos',
+    route: `/join/${TOKEN}/quien-sos`,
     title: 'Sin cuenta · quién sos',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
   },
   {
-    // La salida para quien no esta en la lista que armo el dueño. Es la unica
-    // excepcion a que los integrantes los administre el dueño: uno se da de
-    // alta a si mismo, y nada mas.
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/soy-nuevo',
+    // La entrada: el acceso por enlace del front oficial con la opcion de
+    // seguir sin cuenta, que es de esta historia.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion&alcance=SPLT-022`,
+    title: 'Sin cuenta · entrada',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
+    hidden: true,
+  },
+  {
+    // La salida para quien no esta en la lista que armo el dueño.
+    route: `/join/${TOKEN}/soy-nuevo`,
     title: 'Sin cuenta · no estoy en la lista',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
     hidden: true,
   },
   {
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular',
+    route: `/eventos/invitacion/${TOKEN}`,
     title: 'Con cuenta · quién sos',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
   },
   {
-    // La cuenta ya tiene integrante en este evento, asi que no se le vuelve a
-    // preguntar quien es. El estado sale de la ruta y no de los datos, para que
-    // todo el flujo se vea sobre el mismo evento de ejemplo.
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular/ya-vinculado',
+    // La cuenta ya tiene integrante en este evento: no se le vuelve a preguntar.
+    route: `/eventos/invitacion/${TOKEN}?escenario=ya-vinculado`,
     title: 'Con cuenta · ya estás vinculado',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
     hidden: true,
   },
   {
-    // Sumarse como integrante nuevo llegando con cuenta: la misma salida que
-    // tiene quien entra sin cuenta, y ademas queda vinculado.
-    route: '/join/r7Qk2Vx9mLpZ4tHnCwB3sd/vincular/soy-nuevo',
+    // Todos los integrantes ya entraron con su cuenta: no queda ninguno libre.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-integrantes`,
+    title: 'Con cuenta · sin integrantes libres',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
+    hidden: true,
+  },
+  {
+    // Sumarse como integrante nuevo llegando con cuenta. Todavia no esta en el
+    // front oficial.
+    route: `/join/${TOKEN}/vincular/soy-nuevo`,
     title: 'Con cuenta · no estoy en la lista',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],

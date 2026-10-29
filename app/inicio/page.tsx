@@ -1,85 +1,117 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { LandingBackground } from '@/components/landing-background'
-import { LandingBalanceCard } from '@/components/landing-balance-card'
-import { Logo } from '@/components/logo'
-import { Button } from '@/components/ui/button'
-import { primaryButtonClass } from '@/lib/form-styles'
-import { cn } from '@/lib/utils'
+"use client";
 
-export const metadata: Metadata = {
-  title: 'SplitIt · landing',
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "@/lib/use-session";
+import { PrimaryLink } from "@/components/primary-link";
+import { SplitItLogo } from "@/components/splitit-logo";
+import { ArrowRight } from "lucide-react";
+
+const PREVIEW_MEMBERS = [
+  { initial: "N", name: "Nicolas", badge: "recibe", amount: "+$ 28.500", positive: true },
+  { initial: "L", name: "Lucas", badge: "recibe", amount: "+$ 3.000", positive: true },
+  { initial: "M", name: "Marcos", badge: "debe", amount: "-$ 12.500", positive: false },
+  { initial: "F", name: "Francisco", badge: "debe", amount: "-$ 19.000", positive: false },
+] as const;
+
+function BalancePreviewCard() {
+  return (
+    <div className="w-full max-w-[380px] shrink-0 pb-16 lg:pb-0">
+      <div className="border-border w-full max-w-[380px] shrink-0 rounded-[24px] border bg-white p-5 shadow-[0_18px_50px_rgba(7,27,58,0.12)]">
+        <div className="mb-4">
+          <p className="text-foreground text-[15px] font-black">Saldo por integrante</p>
+          <p className="text-muted-foreground text-[12px]">Viaje a Bariloche</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          {PREVIEW_MEMBERS.map((m) => (
+            <div key={m.initial} className="flex items-center gap-3">
+              <span className="bg-muted text-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-black">
+                {m.initial}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate text-[13px] font-black">{m.name}</p>
+                <span
+                  className={`mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black ${
+                    m.positive ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
+                  }`}
+                >
+                  {m.badge}
+                </span>
+              </div>
+              <p
+                className={`shrink-0 text-[13px] font-black ${
+                  m.positive ? "text-primary" : "text-destructive"
+                }`}
+              >
+                {m.amount}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-/**
- * Landing (SPLT-018). Es la home del front, pero en el prototipo `/` pertenece
- * al canvas, asi que vive en `/inicio`.
- *
- * Las medidas salen de los artboards del Figma: 390x844 para mobile y
- * 1440x1024 para desktop, con el corte en `lg`. La barra esta en el flujo en
- * vez de absoluta como en el diseño, de ahi que el `padding-top` del contenido
- * sea el del artboard menos los 88px de la barra.
- */
-export default function LandingPage() {
+function LandingHero() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-card">
-      <LandingBackground />
+    <div className="bg-card relative flex min-h-screen flex-col overflow-hidden">
+      {/* Background SVGs */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[100svh] overflow-hidden"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/landing/fondo-mobile.svg" alt="" className="size-full object-cover lg:hidden" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing/fondo-desktop.svg"
+          alt=""
+          className="hidden size-full object-cover lg:block"
+        />
+      </div>
 
-      {/* Barra de landing, no la del AppShell: una sola seccion no tiene que
-          navegar, asi que no hay menu ni acciones. El que vuelve entra por el
-          CTA: /register ya lleva dos salidas a /login. */}
+      {/* Header */}
       <header className="relative flex h-[88px] shrink-0 items-center px-4 py-2">
         <div className="flex h-[68px] items-center px-[10px]">
-          <Link
-            href="/inicio"
-            aria-label="SplitIt"
-            className="flex h-full items-center rounded-[24px] border border-border bg-card px-4 py-[11px]"
-          >
-            <Logo />
-          </Link>
+          <div className="border-border bg-card flex h-full items-center rounded-[24px] border px-4 py-[11px]">
+            <SplitItLogo />
+          </div>
         </div>
       </header>
 
-      {/* El hero se centra en el alto que sobra en vez de colgar de un padding
-          fijo, asi el bloque no queda hundido cuando la pantalla es alta.
-          El pb compensa opticamente la barra, pero solo en desktop: en mobile
-          el bloque ocupa casi todo el alto y ese mismo pb le come el aire de
-          arriba, dejando el titulo pegado a la barra y encima de la onda. */}
+      {/* Main content */}
       <main className="relative flex flex-1 items-center px-5 lg:px-[140px] lg:pb-[88px]">
         <div className="flex w-full flex-col items-start lg:flex-row lg:items-center lg:justify-between lg:gap-12">
-          {/* En mobile el texto se queda con el primer pantallazo entero, igual
-              que la columna izquierda de desktop: la tarjeta cae abajo del
-              pliegue y asoma 72px para que se note que hay scroll. */}
           <div className="flex min-h-[calc(100svh-160px)] flex-col justify-center gap-6 lg:min-h-0 lg:gap-3">
-            {/* En desktop el titular entra en un renglon; el ancho de mobile
-                esta para que corte en "Comparti el link / y listo." y no deje
-                la "y" colgando arriba. */}
-            <h1 className="max-w-[295px] text-[36px] font-extrabold leading-[1.15] text-foreground lg:max-w-[700px] lg:text-[60px]">
+            <h1 className="text-foreground max-w-[295px] text-[36px] leading-[1.15] font-extrabold lg:max-w-[700px] lg:text-[60px]">
               Compartí el link y listo.
             </h1>
-
             <p className="max-w-[350px] text-[14px] text-black lg:max-w-[560px] lg:text-[18px]">
               Tus amigos cargan gastos y ven sus saldos sin crear cuenta ni bajar nada.
             </p>
-
-            {/* Verde de marca y no el violeta del Figma: en este producto el
-                violeta es el color de la deuda (ver AGENTS.md y la tarjeta de
-                al lado). El resto del estilo sale de `primaryButtonClass`, que
-                es de donde tiene que salir todo boton primario nuevo. */}
-            <Button asChild className={cn(primaryButtonClass, 'w-fit gap-[10px] px-[14px]')}>
-              <Link href="/register">
-                Crear un evento
-                <ArrowRight className="size-6" />
-              </Link>
-            </Button>
+            <PrimaryLink href="/register">
+              Crear un evento
+              <ArrowRight className="size-6" aria-hidden="true" />
+            </PrimaryLink>
           </div>
 
-          <div className="w-full max-w-[380px] shrink-0 pb-16 lg:pb-0">
-            <LandingBalanceCard />
-          </div>
+          <BalancePreviewCard />
         </div>
       </main>
     </div>
-  )
+  );
+}
+
+export default function Home() {
+  const router = useRouter();
+  const session = useSession();
+
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      router.replace("/eventos");
+    }
+  }, [session.status, router]);
+
+  return <LandingHero />;
 }

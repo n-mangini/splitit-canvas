@@ -35,47 +35,46 @@ La raiz abre el canvas, no la app:
 | `/canvas/SPLT-XXX` | la ficha de una historia: su pantalla + link a los criterios |
 | `/inicio` | la landing (vive fuera de `/` justamente porque `/` es del canvas) |
 | `/login`, `/register` | acceso |
-| `/join/[code]` | entrada por invitacion |
-| `/(app)/events`, `/events/new`, `/events/[id]`, `/profile` | la app, dentro de `AppShell` |
+| `/eventos`, `/eventos/[id]`, `/perfil` | la app, con las mismas rutas que el front oficial |
+| `/eventos/invitacion/[token]` | entrada por invitacion |
+| `/join/[token]/...` | pasos de invitacion que el front oficial todavia no tiene |
 
-Estados vacios como `/events/empty` son rutas propias, para poder linkearlas desde el canvas.
+Los estados que el front oficial resuelve dentro de la pantalla se piden por query para
+poder linkearlos desde el canvas: `?modal=crear|editar|eliminar|invitar|gasto`,
+`?tab=saldos|integrantes`, `?escenario=vacio|sin-sesion|sin-integrantes|ya-vinculado`.
 
 **Nunca dejar una pantalla en `/`**: su iframe cargaria el canvas dentro de si mismo.
 
-## Donde viven las reglas
+## De donde salen las pantallas
 
-Este archivo no repite valores — se desactualizan sin que nadie lo note. Dice donde mirar:
+Las pantallas ya implementadas son **copia del front oficial** (`SplitItLab/SplitIt`,
+`web/` en `main`): `components/`, `components/ui/`, `lib/` y `app/globals.css` se copian
+tal cual. Para volver a sincronizar se copian de nuevo esos archivos y se reaplican los
+agregados del canvas, que son pocos y estan marcados con un comentario `Canvas:`.
 
 | Si vas a... | Leelo primero |
 |---|---|
-| dibujar un input o un boton primario | `lib/form-styles.ts` — **manda sobre cualquier cosa que dibujes a mano** |
-| usar colores, radios o tipografia | `app/globals.css` (`:root` y `@theme inline`) |
-| armar una card | la utilidad `.splitit-card` en `app/globals.css` |
-| usar un componente de UI | `components/ui/` — shadcn ya instalado, no traer otra libreria |
-| poner un icono | `lucide-react`; los de evento estan tipados en `lib/event-icons.ts` |
-| necesitar datos | `lib/mock-data.ts` (`mockEvents`, `calculateBalances`, `formatCurrency`, `getInitials`) y `lib/types.ts` |
+| tocar los datos de ejemplo o un escenario | `lib/mock-api.ts` — responde las rutas de la API real; `lib/api.ts` lo usa en vez de la red |
+| abrir un estado desde la direccion | `lib/canvas-state.ts` |
+| usar colores, radios o tipografia | `app/globals.css` (el del front oficial) |
+| usar un componente de UI | `components/ui/` — los mismos del front oficial, no traer otra libreria |
 | sumar o mover una pantalla del canvas | `lib/prototype-map.ts` — unica fuente de verdad del mapa |
 | construir una pantalla nueva | la skill `construir-pantalla` de `splitit-agents` |
 
-Antes de escribir estilos nuevos, buscar si ya existen:
-
-```bash
-grep -rn "primaryButtonClass\|fieldClass\|splitit-card" components app
-```
+Una historia que el front oficial todavia no tiene se construye con sus mismos componentes
+(como el boton de Google de SPLT-019 o `/join/...` de SPLT-022), para que se vea parte de
+la misma app.
 
 ## Convenciones que no estan en ningun archivo
 
-- **Verde = recibe, violeta = debe.** Saldo en cero, texto neutro. Vale en toda la app.
 - **Mobile primero.** Se revisa a 390px de ancho antes que en desktop.
-- La navegacion de la app vive en `AppShell` (logo + menu). Las pantallas de acceso y la
-  landing tienen su propia cabecera y no lo usan.
-- Los componentes compartidos entre dos pantallas se extraen a `components/` — el `Logo`
-  salio de ahi cuando la landing necesito el mismo que `AppShell`.
+- Lo que ya esta en el front oficial no se rediseña aca: si hay que cambiarlo, se cambia
+  alla y se vuelve a copiar.
 
 ## Que no hacer
 
 - No cerrar issues desde una PR de este repo.
-- No inventar un boton o un input propio pudiendo usar `lib/form-styles.ts`.
+- No inventar un boton o un input propio pudiendo usar los de `components/ui/`.
 - No agregar dependencias de UI: shadcn + lucide alcanzan.
 - No usar capturas de pantalla como contenido del canvas. El canvas muestra pantallas vivas.
 - No dejar una pantalla del prototipo en `/`.
@@ -117,3 +116,13 @@ Los bugs se reportan con Ybug (el boton flotante, solo en el deploy) y llegan a
 
 Cada bug arreglado deja su test: asi la suite crece con bugs reales y el mismo bug
 no vuelve.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

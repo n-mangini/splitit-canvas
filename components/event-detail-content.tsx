@@ -1,0 +1,173 @@
+"use client";
+
+import { useId, useRef, useState } from "react";
+import { UserRound } from "lucide-react";
+
+import { currencyLabel, type EventDetail, type EventMember } from "@/lib/events";
+import { getInitials } from "@/lib/profile";
+import { EventBalances } from "@/components/event-balances";
+import { EventExpensesContent, useEventExpenses } from "@/components/event-expenses";
+import { EventIcon } from "@/components/event-icon";
+import { EventSuggestedPayments } from "@/components/event-suggested-payments";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useCanvasParam } from "@/lib/canvas-state";
+
+const TABS = [
+  { id: "gastos", label: "Gastos" },
+  { id: "saldos", label: "Saldos" },
+  { id: "integrantes", label: "Integrantes" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+export function EventDetailContent({
+  event,
+  onUnauthorized,
+  onNotFound,
+}: {
+  event: EventDetail;
+  onUnauthorized: () => void;
+  onNotFound: () => void;
+}) {
+  const [active, setActive] = useState<TabId>("gastos");
+  // Canvas: artboards que abren en otra pestaña.
+  useCanvasParam("tab", "saldos", () => setActive("saldos"));
+  useCanvasParam("tab", "integrantes", () => setActive("integrantes"));
+  const expenses = useEventExpenses({ event, onUnauthorized, onNotFound });
+  const baseId = useId();
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const tabId = (id: TabId) => `${baseId}-tab-${id}`;
+  const panelId = (id: TabId) => `${baseId}-panel-${id}`;
+
+  const onTabKeyDown = (event_: React.KeyboardEvent) => {
+    const order = TABS.map((tab) => tab.id);
+    const current = order.indexOf(active);
+    let next: number | null = null;
+
+    if (event_.key === "ArrowRight") next = (current + 1) % order.length;
+    if (event_.key === "ArrowLeft") next = (current - 1 + order.length) % order.length;
+    if (event_.key === "Home") next = 0;
+    if (event_.key === "End") next = order.length - 1;
+    if (next === null) return;
+
+    event_.preventDefault();
+    const id = order[next];
+    setActive(id);
+    tabRefs.current[id]?.focus();
+  };
+
+  return (
+    <>
+      <header className="flex items-start gap-4">
+        <EventIcon iconKey={event.iconKey} />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-text-primary text-[32px] leading-[1.15] font-extrabold break-words sm:text-[40px]">
+            {event.name}
+          </h1>
+          {event.description && (
+            <p className="text-text-secondary mt-1 max-w-xl text-sm font-medium">
+              {event.description}
+            </p>
+          )}
+          <Badge variant="info" className="mt-3 h-auto rounded-full px-3 py-1 font-black">
+            Moneda {currencyLabel(event.baseCurrency)}
+          </Badge>
+        </div>
+      </header>
+
+      <div className="border-border border-b">
+        <div role="tablist" aria-label="Secciones del evento" className="flex gap-6">
+          {TABS.map((tab) => {
+            const selected = tab.id === active;
+            return (
+              <button
+                key={tab.id}
+                ref={(node) => {
+                  tabRefs.current[tab.id] = node;
+                }}
+                type="button"
+                role="tab"
+                id={tabId(tab.id)}
+                aria-selected={selected}
+                aria-controls={panelId(tab.id)}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => setActive(tab.id)}
+                onKeyDown={onTabKeyDown}
+                className={`focus-visible:ring-ring/50 -mb-px border-b-2 px-1 pb-3 text-base font-bold outline-none focus-visible:ring-3 ${
+                  selected
+                    ? "border-primary text-primary"
+                    : "text-text-secondary hover:text-text-primary border-transparent"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {active === "gastos" && (
+        <section role="tabpanel" id={panelId("gastos")} aria-labelledby={tabId("gastos")}>
+          <EventExpensesContent
+            event={event}
+            onUnauthorized={onUnauthorized}
+            onNotFound={onNotFound}
+            {...expenses}
+          />
+        </section>
+      )}
+
+      {active === "saldos" && (
+        <section role="tabpanel" id={panelId("saldos")} aria-labelledby={tabId("saldos")}>
+          <EventBalances event={event} onUnauthorized={onUnauthorized} onNotFound={onNotFound} />
+          <div className="mt-4">
+            <EventSuggestedPayments
+              event={event}
+              hasExpenses={
+                expenses.state.status === "ready" ? expenses.state.expenses.length > 0 : null
+              }
+              onUnauthorized={onUnauthorized}
+              onNotFound={onNotFound}
+            />
+          </div>
+        </section>
+      )}
+
+      {active === "integrantes" && (
+        <section role="tabpanel" id={panelId("integrantes")} aria-labelledby={tabId("integrantes")}>
+          <h2 className="text-text-primary text-2xl font-extrabold">Integrantes</h2>
+          <ul className="mt-4 grid gap-3 md:grid-cols-2">
+            {event.members.map((member) => (
+              <MemberCard key={member.id} member={member} />
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
+
+function MemberCard({ member }: { member: EventMember }) {
+  return (
+    <li className="border-border flex items-center gap-3 rounded-[24px] border p-4">
+      <Avatar className="size-10">
+        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="text-text-primary truncate text-base font-extrabold">{member.name}</p>
+        {member.isGuest ? (
+          <p className="text-text-secondary mt-0.5 text-sm font-medium">Invitado</p>
+        ) : (
+          member.email && (
+            <p className="text-text-secondary mt-0.5 truncate text-sm font-medium">
+              {member.email}
+            </p>
+          )
+        )}
+      </div>
+      <UserRound aria-hidden="true" className="text-muted-foreground size-5 shrink-0" />
+    </li>
+  );
+}

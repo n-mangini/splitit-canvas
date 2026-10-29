@@ -1,5 +1,8 @@
+'use client'
+
 /**
- * Ingreso con Google (SPLT-019).
+ * Ingreso con Google (SPLT-019). El front oficial todavia no lo tiene: se
+ * agrega debajo del formulario de las pantallas copiadas de login y registro.
  *
  * Vive en un solo lugar porque la misma pieza aparece en /login y /register: el
  * primer criterio de la historia pide que las dos pantallas ofrezcan la opcion.
@@ -10,6 +13,8 @@
  * `continue_with`, forma `rectangular`, a lo ancho del formulario.
  */
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Spinner } from '@/components/ui/spinner'
 
 function GoogleLogo() {
@@ -39,9 +44,9 @@ function GoogleLogo() {
 export function AuthDivider() {
   return (
     <div className="flex items-center gap-3" aria-hidden="true">
-      <span className="h-px flex-1 bg-muted-strong" />
+      <span className="h-px flex-1 bg-border" />
       <span className="text-sm font-medium text-muted-foreground">o</span>
-      <span className="h-px flex-1 bg-muted-strong" />
+      <span className="h-px flex-1 bg-border" />
     </div>
   )
 }
@@ -67,5 +72,33 @@ export function GoogleAuthButton({
       </span>
       <span className="truncate px-6">Continuar con Google</span>
     </button>
+  )
+}
+
+// Mensajes de SPLT-019. Cada uno tiene su variante de la pantalla por query
+// (`?google=error`, `?google=cuenta-google`) para poder verlo en el canvas.
+export function googleMessage(state: string | null): string | null {
+  if (state === 'error') return 'No pudimos completar el ingreso con Google'
+  if (state === 'cuenta-google') return 'Esta cuenta ahora ingresa con Google'
+  return null
+}
+
+/** Separador + boton, listos para ir debajo del formulario. */
+export function GoogleAuthSection({ redirect }: { redirect: string | null }) {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleGoogle = async () => {
+    setIsLoading(true)
+    // Simula la ida y vuelta por Google.
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    router.push(redirect ?? '/eventos')
+  }
+
+  return (
+    <div className="mt-5 flex flex-col gap-[10px]">
+      <AuthDivider />
+      <GoogleAuthButton onClick={handleGoogle} isLoading={isLoading} />
+    </div>
   )
 }
