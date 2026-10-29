@@ -1,158 +1,136 @@
-'use client'
-
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { AuthHeading, AuthSplitLayout } from '@/components/auth-split-layout'
-import { AuthDivider, GoogleAuthButton } from '@/components/google-auth-button'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Spinner } from '@/components/ui/spinner'
-import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
-import { cn } from '@/lib/utils'
-import { Eye, EyeOff } from 'lucide-react'
-
+"use client";
+import { Suspense, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingIndicator } from "@/components/loading-indicator";
+import { AuthLayout } from "@/components/auth-layout";
+import { GoogleAuthSection, googleMessage } from "@/components/google-auth-button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  registerUser,
+  RegisterError,
+  RegisterInput,
+  registerSchema,
+  withRedirect,
+} from "@/lib/auth";
+import { showAppToast } from "@/lib/toast";
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const [error, setError] = useState('')
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
 
-  const handleGoogle = async () => {
-    setError('')
-    setIsGoogleLoading(true)
+function RegisterForm() {
+  const router = useRouter();
+  const loginPath = withRedirect("/login", useSearchParams().get("redirect"));
+  // Canvas: los mensajes de Google (SPLT-019) salen de la direccion.
+  const [generalError, setGeneralError] = useState<string | null>(
+    googleMessage(useSearchParams().get("google"))
+  );
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+  });
 
-    // Simulate the round trip through Google
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    router.push('/events')
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    if (!name || !email || !password) {
-      setError('Por favor completa todos los campos')
-      return
+  const onSubmit = async (data: RegisterInput) => {
+    setGeneralError(null);
+    try {
+      await registerUser(data);
+      showAppToast("success", "¡Cuenta creada con éxito!");
+      router.push(loginPath);
+    } catch (err) {
+      if (err instanceof RegisterError) {
+        if (err.type === "email-taken") {
+          setError("email", { message: err.message });
+        } else {
+          setGeneralError(err.message);
+        }
+        showAppToast("error", err.message);
+      }
     }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Mock success - redirect to events
-    router.push('/events')
-  }
+  };
 
   return (
-    <AuthSplitLayout
-      topRight={
-        <Link href="/login" className="text-base font-medium text-black hover:underline">
-          LogIn
-        </Link>
-      }
+    <AuthLayout
+      heroTitle="Empezá a dividir gastos en menos de un minuto."
+      heroDescription="Creá tu cuenta, sumá a tu grupo y olvidate de las cuentas pendientes."
+      title="Crea una cuenta"
+      description="Ingresá mail y contraseña para crear tu cuenta"
+      footer={{ text: "¿Ya tenés cuenta?", linkLabel: "Iniciá sesión", href: loginPath }}
     >
-      <div className="w-full max-w-md space-y-[10px] lg:max-w-none">
-        <AuthHeading
-          title="Crea una cuenta"
-          subtitle="Ingresa mail y contraseña para crear tu cuenta"
-        />
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <FieldGroup>
+          {generalError && (
+            <Alert variant="destructive">
+              <AlertDescription>{generalError}</AlertDescription>
+            </Alert>
+          )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
-          <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="name" className="text-sm font-medium text-foreground">
-              Nombre
-            </Label>
+          <Field className="gap-1.5" data-invalid={!!errors.name}>
+            <FieldLabel htmlFor="name" className="font-bold">
+              Nombre completo
+            </FieldLabel>
             <Input
               id="name"
-              type="text"
-              placeholder="Nombre"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={fieldClass}
+              placeholder="Tu nombre"
               autoComplete="name"
+              aria-invalid={!!errors.name}
+              className="h-11"
+              {...register("name")}
             />
-          </div>
+            <FieldError errors={[errors.name]} />
+          </Field>
 
-          <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="email" className="text-sm font-medium text-foreground">
+          <Field className="gap-1.5" data-invalid={!!errors.email}>
+            <FieldLabel htmlFor="email" className="font-bold">
               Email
-            </Label>
+            </FieldLabel>
             <Input
               id="email"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={fieldClass}
+              placeholder="tu@email.com"
               autoComplete="email"
+              type="email"
+              aria-invalid={!!errors.email}
+              className="h-11"
+              {...register("email")}
             />
-          </div>
+            <FieldError errors={[errors.email]} />
+          </Field>
 
-          <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="password" className="text-sm font-medium text-foreground">
+          <Field className="gap-1.5" data-invalid={!!errors.password}>
+            <FieldLabel htmlFor="password" className="font-bold">
               Contraseña
-            </Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`${fieldClass} pr-14`}
-                autoComplete="new-password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
+            </FieldLabel>
+            <Input
+              id="password"
+              placeholder="Creá una contraseña"
+              type="password"
+              autoComplete="new-password"
+              aria-invalid={!!errors.password}
+              className="h-11"
+              {...register("password")}
+            />
+            <FieldError errors={[errors.password]} />
+          </Field>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <Button
-            type="submit"
-            disabled={isLoading || isGoogleLoading}
-            className={cn(primaryButtonClass, 'w-full')}
-          >
-            {isLoading ? <Spinner className="h-4 w-4" /> : 'Crear cuenta'}
+          <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
+            {isSubmitting ? <LoadingIndicator message="Creando tu cuenta…" /> : "Crear cuenta"}
           </Button>
-        </form>
-
-        <div className="flex flex-col gap-[10px]">
-          <AuthDivider />
-          <GoogleAuthButton
-            onClick={handleGoogle}
-            isLoading={isGoogleLoading}
-            disabled={isLoading}
-          />
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground">
-          ¿Ya tenés cuenta?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Iniciá sesión
-          </Link>
-        </p>
-      </div>
-    </AuthSplitLayout>
-  )
+        </FieldGroup>
+      </form>
+      {/* Canvas: SPLT-019, todavia no esta en el front oficial. */}
+      <GoogleAuthSection redirect={null} />
+    </AuthLayout>
+  );
 }

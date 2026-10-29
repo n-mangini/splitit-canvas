@@ -1,140 +1,170 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Check, Pencil, Users, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { createElement, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Pencil, Plus, X } from "lucide-react";
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Spinner } from '@/components/ui/spinner'
-import { Textarea } from '@/components/ui/textarea'
-import { EventIcon, eventIcons, getEventIcon } from '@/lib/event-icons'
-import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
-import { mockCurrentUser } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
+  createEvent,
+  createEventSchema,
+  DEFAULT_CURRENCY,
+  EventError,
+  EVENT_CURRENCIES,
+  type CreateEventInput,
+  type CreateEventPayload,
+  type EventSummary,
+} from "@/lib/events";
+import { EVENT_ICON_OPTIONS, eventIconFor } from "@/components/event-icon";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingIndicator } from "@/components/loading-indicator";
 
-const currencies = [
-  { value: 'ARS', label: 'ARS - Peso argentino' },
-  { value: 'USD', label: 'USD - Dolar' },
-  { value: 'EUR', label: 'EUR - Euro' },
-  { value: 'BRL', label: 'BRL - Real' },
-]
+const DEFAULT_ICON = EVENT_ICON_OPTIONS[0].key;
 
-export function CreateEventDialog() {
-  const router = useRouter()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [currency, setCurrency] = useState('ARS')
-  const [icon, setIcon] = useState<EventIcon>('plane')
-  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
-  const [members, setMembers] = useState<string[]>([])
-  const [draftMember, setDraftMember] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [nameTouched, setNameTouched] = useState(false)
-  const [memberError, setMemberError] = useState('')
+type CreateEventDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (event: EventSummary) => void;
+  onUnauthorized: () => void;
+  /** Nombre del usuario autenticado: siempre integra el evento. */
+  currentUserName?: string;
+};
 
-  const isNameMissing = !name.trim()
+export function CreateEventDialog({
+  open,
+  onOpenChange,
+  onCreated,
+  onUnauthorized,
+  currentUserName,
+}: CreateEventDialogProps) {
+  const [participants, setParticipants] = useState<string[]>([]);
+  const [memberDraft, setMemberDraft] = useState("");
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [iconKey, setIconKey] = useState(DEFAULT_ICON);
+  const [iconOpen, setIconOpen] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
-  const { Icon } = getEventIcon(icon)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateEventInput, unknown, CreateEventPayload>({
+    resolver: zodResolver(createEventSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      baseCurrency: DEFAULT_CURRENCY,
+      participantNames: [],
+    },
+  });
 
-  const close = () => router.push('/events')
+  const resetForm = () => {
+    reset({
+      name: "",
+      description: "",
+      baseCurrency: DEFAULT_CURRENCY,
+      participantNames: [],
+    });
+    setParticipants([]);
+    setMemberDraft("");
+    setMemberError(null);
+    setIconKey(DEFAULT_ICON);
+    setGeneralError(null);
+  };
 
-  const addMember = () => {
-    const value = draftMember.trim()
-    if (!value) return
-    // El creador ya ocupa su lugar en la lista, asi que tambien compite por el nombre.
-    const taken = [mockCurrentUser.name, ...members].some(
-      (member) => member.toLowerCase() === value.toLowerCase()
-    )
-    if (taken) {
-      setMemberError('Ya hay un integrante con ese nombre')
-      return
+  const handleOpenChange = (next: boolean) => {
+    if (!next) resetForm();
+    onOpenChange(next);
+  };
+
+  const addParticipant = () => {
+    const name = memberDraft.trim();
+    if (!name) {
+      setMemberError("Escribí un nombre para agregarlo.");
+      return;
     }
-    setMembers([...members, value])
-    setDraftMember('')
-    setMemberError('')
-  }
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-
-    if (isNameMissing) {
-      setNameTouched(true)
-      return
+    if (
+      currentUserName?.trim().toLowerCase() === name.toLowerCase() ||
+      participants.some((participant) => participant.toLowerCase() === name.toLowerCase())
+    ) {
+      setMemberError("Ese integrante ya está en la lista.");
+      return;
     }
+    setParticipants((current) => [...current, name]);
+    setMemberDraft("");
+    setMemberError(null);
+  };
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    toast.success(`Creamos «${name.trim()}»`)
-    router.push('/events/event-1')
-  }
+  const removeParticipant = (name: string) => {
+    setParticipants((current) => current.filter((participant) => participant !== name));
+  };
+
+  const onSubmit = async (data: CreateEventPayload) => {
+    setGeneralError(null);
+    try {
+      const created = await createEvent({ ...data, iconKey, participantNames: participants });
+      onCreated(created);
+      resetForm();
+      onOpenChange(false);
+    } catch (err) {
+      if (err instanceof EventError && err.type === "unauthorized") {
+        onUnauthorized();
+        return;
+      }
+      setGeneralError(
+        err instanceof EventError ? err.message : "No pudimos crear el evento. Probá de nuevo."
+      );
+    }
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && close()}>
-      <DialogContent
-        aria-describedby={undefined}
-        showCloseButton={false}
-        className="flex max-h-[90vh] flex-col gap-4 overflow-y-auto rounded-[24px] border-border bg-card p-6 shadow-none sm:max-w-[576px] sm:p-8"
-      >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent aria-label="Crear evento">
         <div className="flex items-start justify-between gap-3">
-          <DialogTitle className="text-[32px] font-extrabold leading-[1.15] text-foreground">
-            Crear evento
-          </DialogTitle>
-          {/* Cruz propia: la del Dialog es un icono de 16px sin area tactil. */}
-          <button
-            type="button"
-            onClick={close}
+          <DialogTitle>Crear evento</DialogTitle>
+          <DialogClose
             aria-label="Cerrar"
-            className="-mr-2 -mt-1 flex size-10 shrink-0 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="text-text-secondary hover:text-text-primary hover:bg-muted -mt-1 -mr-2 flex size-10 shrink-0 items-center justify-center rounded-[8px] transition-colors"
           >
             <X className="size-5" />
-          </button>
+          </DialogClose>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Icono: el lapiz abre el selector como popover y no como un segundo
-              modal encima de este. */}
-          <Popover open={isIconPickerOpen} onOpenChange={setIsIconPickerOpen}>
-            <PopoverTrigger asChild>
-              <button type="button" className="group relative w-fit" aria-label="Cambiar icono del evento">
-                <span className="flex size-14 items-center justify-center rounded-[16px] bg-soft-primary text-primary">
-                  <Icon className="size-6" />
-                </span>
-                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border border-border bg-card text-foreground transition-transform group-hover:scale-110">
-                  <Pencil className="size-3" />
-                </span>
-              </button>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Popover open={iconOpen} onOpenChange={setIconOpen}>
+            <PopoverTrigger
+              aria-label="Cambiar icono del evento"
+              className="focus-visible:ring-ring/50 relative w-fit rounded-[16px] outline-none focus-visible:ring-3"
+            >
+              <span className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-[16px]">
+                {createElement(eventIconFor(iconKey), { className: "size-6" })}
+              </span>
+              <span className="border-card bg-primary text-primary-foreground absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2">
+                <Pencil className="size-3" />
+              </span>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto rounded-[16px] border-border p-3">
-              <div className="grid grid-cols-4 gap-2">
-                {eventIcons.map((option) => (
+            <PopoverContent>
+              <div className="grid grid-cols-4 gap-1">
+                {EVENT_ICON_OPTIONS.map(({ key, label, Icon }) => (
                   <button
-                    key={option.value}
+                    key={key}
                     type="button"
-                    title={option.label}
-                    aria-label={option.label}
+                    aria-label={label}
+                    aria-pressed={key === iconKey}
                     onClick={() => {
-                      setIcon(option.value)
-                      setIsIconPickerOpen(false)
+                      setIconKey(key);
+                      setIconOpen(false);
                     }}
-                    className={cn(
-                      'flex size-12 items-center justify-center rounded-[12px] transition-colors',
-                      option.value === icon
-                        ? 'bg-soft-primary text-primary'
-                        : 'text-muted-foreground hover:bg-muted'
-                    )}
+                    className="text-text-primary hover:bg-muted focus-visible:ring-ring/50 aria-pressed:bg-primary/10 aria-pressed:text-primary flex size-12 items-center justify-center rounded-[12px] outline-none focus-visible:ring-3"
                   >
-                    <option.Icon className="size-5" />
+                    <Icon className="size-5" />
                   </button>
                 ))}
               </div>
@@ -142,133 +172,136 @@ export function CreateEventDialog() {
           </Popover>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="event-name" className="text-base font-extrabold text-black">
-              Nombre del evento
-            </Label>
+            <Label htmlFor="event-name">Nombre del evento</Label>
             <Input
               id="event-name"
               placeholder="Viaje a la cordillera"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onBlur={() => setNameTouched(true)}
-              aria-invalid={nameTouched && isNameMissing}
-              aria-describedby={nameTouched && isNameMissing ? 'event-name-error' : undefined}
-              className={fieldClass}
+              aria-invalid={Boolean(errors.name)}
+              className="h-auto rounded-[6px] px-3 py-2 text-base"
+              {...register("name")}
             />
-            {nameTouched && isNameMissing && (
-              <p id="event-name-error" className="text-sm font-medium text-destructive">
-                El nombre del evento es obligatorio
+            {errors.name && (
+              <p role="alert" className="text-destructive text-sm">
+                {errors.name.message}
               </p>
             )}
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="event-description" className="text-base font-extrabold text-black">
-              Descripcion <span className="font-medium text-muted-foreground">(opcional)</span>
+            <Label htmlFor="event-description">
+              Descripción <span className="text-text-secondary font-medium">(opcional)</span>
             </Label>
             <Textarea
               id="event-description"
-              placeholder="Datos importantes para la distincion del evento"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className={cn(fieldClass, 'min-h-[84px]')}
+              placeholder="Datos importantes para la distinción del evento"
+              className="min-h-24 rounded-[6px] px-3 py-2 text-base"
+              {...register("description")}
             />
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label className="text-base font-extrabold text-black">Moneda del evento</Label>
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="h-10 w-fit gap-2 rounded-[8px] border-0 bg-muted px-4 text-base font-medium text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-[16px]">
-                {currencies.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="event-currency">Moneda del evento</Label>
+            <select
+              id="event-currency"
+              aria-invalid={Boolean(errors.baseCurrency)}
+              className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-text-primary w-fit rounded-[6px] border bg-transparent px-3 py-2 text-base outline-none focus-visible:ring-3"
+              {...register("baseCurrency")}
+            >
+              {EVENT_CURRENCIES.map(({ code, label }) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            {errors.baseCurrency && (
+              <p role="alert" className="text-destructive text-sm">
+                {errors.baseCurrency.message}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="event-member" className="text-base font-extrabold text-black">
-              Integrantes
-            </Label>
-            <p className="text-sm font-medium text-muted-foreground">
-              Las personas que entren al evento lo haran con alguno de estos nombres
+            <Label htmlFor="event-member">Integrantes</Label>
+            <p className="text-text-secondary text-sm font-medium">
+              Las personas que entren al evento lo harán con alguno de estos nombres
             </p>
-
             <div className="flex gap-2">
               <Input
                 id="event-member"
                 placeholder="Nombre"
-                value={draftMember}
-                onChange={(event) => setDraftMember(event.target.value)}
+                value={memberDraft}
+                onChange={(event) => {
+                  setMemberDraft(event.target.value);
+                  setMemberError(null);
+                }}
                 onKeyDown={(event) => {
-                  // Enter agrega el integrante, no envia el formulario.
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    addMember()
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addParticipant();
                   }
                 }}
-                aria-invalid={!!memberError}
-                className={cn(fieldClass, 'flex-1')}
+                aria-invalid={Boolean(memberError)}
+                className="h-auto rounded-[6px] px-3 py-2 text-base"
               />
-              <Button
-                type="button"
-                onClick={addMember}
-                className={cn(primaryButtonClass, 'shrink-0 px-4 text-base')}
-              >
+              <Button type="button" onClick={addParticipant} className="h-auto rounded-[6px] px-4">
                 Agregar
               </Button>
             </div>
-
-            {memberError && <p className="text-sm font-medium text-destructive">{memberError}</p>}
-
-            {/* El Figma no dibuja esta lista, pero sin ella no se ve al creador
-                precargado ni hay forma de sacar a alguien recien agregado. */}
+            {memberError && (
+              <p role="alert" className="text-destructive text-sm">
+                {memberError}
+              </p>
+            )}
             <ul className="mt-1 flex flex-col gap-1">
-              <li className="flex items-center justify-between gap-2 rounded-[8px] bg-background py-1 pl-3 pr-1">
-                <span className="truncate text-sm font-medium text-foreground">
-                  {mockCurrentUser.name}
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">vos</span>
-                </span>
-                <span className="flex size-9 shrink-0 items-center justify-center text-primary">
-                  <Check className="size-4" />
-                </span>
-              </li>
-              {members.map((member) => (
+              {currentUserName && (
+                <li className="bg-muted flex items-center justify-between gap-2 rounded-[8px] py-1 pr-1 pl-3">
+                  <span className="text-text-primary truncate text-sm font-medium">
+                    {currentUserName}
+                    <span className="text-text-secondary ml-2 text-sm font-medium">vos</span>
+                  </span>
+                  <span className="text-primary flex size-9 shrink-0 items-center justify-center">
+                    <Check className="size-4" />
+                  </span>
+                </li>
+              )}
+              {participants.map((name) => (
                 <li
-                  key={member}
-                  className="flex items-center justify-between gap-2 rounded-[8px] bg-background py-1 pl-3 pr-1"
+                  key={name}
+                  className="bg-muted flex items-center justify-between gap-2 rounded-[8px] py-1 pr-1 pl-3"
                 >
-                  <span className="truncate text-sm font-medium text-foreground">{member}</span>
-                  <button
+                  <span className="text-text-primary truncate text-sm font-medium">{name}</span>
+                  <Button
                     type="button"
-                    onClick={() => setMembers(members.filter((item) => item !== member))}
-                    aria-label={`Quitar a ${member}`}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-muted-strong hover:text-destructive"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={"Quitar a " + name}
+                    onClick={() => removeParticipant(name)}
                   >
                     <X className="size-4" />
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           </div>
 
+          {generalError && (
+            <Alert variant="destructive">
+              <AlertDescription>{generalError}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex pt-2 sm:justify-end">
             <Button
               type="submit"
-              disabled={isLoading || isNameMissing}
-              className={cn(primaryButtonClass, 'w-full gap-2 px-4 sm:w-auto')}
+              disabled={isSubmitting}
+              className="h-10 w-full rounded-[8px] px-5 text-xl font-medium sm:w-auto"
             >
-              {isLoading ? (
-                <Spinner className="size-4" />
+              {isSubmitting ? (
+                <LoadingIndicator message="Creando evento…" spinnerClassName="size-5" />
               ) : (
                 <>
+                  <Plus className="size-5" />
                   Crear evento
-                  <Users className="size-5" />
                 </>
               )}
             </Button>
@@ -276,5 +309,5 @@ export function CreateEventDialog() {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

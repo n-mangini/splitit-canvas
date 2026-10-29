@@ -1,119 +1,135 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Lock, Pencil, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Spinner } from '@/components/ui/spinner'
-import { Textarea } from '@/components/ui/textarea'
-import { EventIcon, eventIcons, getEventIcon } from '@/lib/event-icons'
-import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
-import { cn } from '@/lib/utils'
-import type { Event } from '@/lib/types'
+import { createElement, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Pencil, X } from "lucide-react";
 
-const currencyLabels: Record<string, string> = {
-  ARS: 'ARS - Peso argentino',
-  USD: 'USD - Dolar',
-  EUR: 'EUR - Euro',
-  BRL: 'BRL - Real',
-}
+import {
+  currencyLabel,
+  EventError,
+  updateEvent,
+  updateEventSchema,
+  type EventDetail,
+  type EventSummary,
+  type UpdateEventInput,
+  type UpdateEventPayload,
+} from "@/lib/events";
+import { EVENT_ICON_OPTIONS, eventIconFor } from "@/components/event-icon";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingIndicator } from "@/components/loading-indicator";
 
-/**
- * Editar evento (SPLT-020). Modal sobre el detalle, igual que crear evento es
- * un modal sobre el listado.
- *
- * Se editan nombre, descripcion e icono. Los integrantes no: entran al crear
- * el evento y por invitacion, que son otras historias.
- */
-export function EditEventDialog({ event }: { event: Event }) {
-  const router = useRouter()
-  const back = `/events/${event.id}`
+type EditEventDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: EventDetail;
+  onUpdated: (event: EventSummary) => void;
+  onUnauthorized: () => void;
+};
 
-  const [name, setName] = useState(event.name)
-  const [description, setDescription] = useState(event.description ?? '')
-  const [icon, setIcon] = useState<EventIcon | undefined>(event.icon)
-  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [nameTouched, setNameTouched] = useState(false)
+export function EditEventDialog({
+  open,
+  onOpenChange,
+  event,
+  onUpdated,
+  onUnauthorized,
+}: EditEventDialogProps) {
+  const [iconKey, setIconKey] = useState<string | undefined>(event.iconKey ?? undefined);
+  const [iconOpen, setIconOpen] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
-  const isNameMissing = !name.trim()
-  const { Icon } = getEventIcon(icon)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<UpdateEventInput, unknown, UpdateEventPayload>({
+    resolver: zodResolver(updateEventSchema),
+    defaultValues: {
+      name: event.name,
+      description: event.description ?? "",
+      iconKey: event.iconKey ?? undefined,
+    },
+  });
+  const syncWithEvent = () => {
+    reset({
+      name: event.name,
+      description: event.description ?? "",
+      iconKey: event.iconKey ?? undefined,
+    });
+    setIconKey(event.iconKey ?? undefined);
+    setGeneralError(null);
+  };
 
-  // Cancelar es volver al detalle: nada de lo tipeado se guarda.
-  const close = () => router.push(back)
+  const handleOpenChange = (next: boolean) => {
+    if (next) syncWithEvent();
+    onOpenChange(next);
+  };
 
-  const handleSubmit = async (formEvent: React.FormEvent) => {
-    formEvent.preventDefault()
-
-    if (isNameMissing) {
-      setNameTouched(true)
-      return
+  const onSubmit = async (data: UpdateEventPayload) => {
+    setGeneralError(null);
+    try {
+      const updated = await updateEvent(event.id, { ...data, iconKey });
+      onUpdated(updated);
+      onOpenChange(false);
+    } catch (err) {
+      if (err instanceof EventError && err.type === "unauthorized") {
+        onUnauthorized();
+        return;
+      }
+      setGeneralError(
+        err instanceof EventError ? err.message : "No pudimos guardar los cambios. Probá de nuevo."
+      );
     }
-
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    toast.success('Guardamos los cambios')
-    router.push(back)
-  }
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && close()}>
-      <DialogContent
-        aria-describedby={undefined}
-        showCloseButton={false}
-        className="flex max-h-[90vh] flex-col gap-4 overflow-y-auto rounded-[24px] border-border bg-card p-6 shadow-none sm:max-w-[576px] sm:p-8"
-      >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent aria-label="Editar evento">
         <div className="flex items-start justify-between gap-3">
-          <DialogTitle className="text-[32px] font-extrabold leading-[1.15] text-foreground">
-            Editar evento
-          </DialogTitle>
-          <button
-            type="button"
-            onClick={close}
+          <DialogTitle>Editar evento</DialogTitle>
+          <DialogClose
             aria-label="Cerrar"
-            className="-mr-2 -mt-1 flex size-10 shrink-0 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="text-text-secondary hover:text-text-primary hover:bg-muted -mt-1 -mr-2 flex size-10 shrink-0 items-center justify-center rounded-[8px] transition-colors"
           >
             <X className="size-5" />
-          </button>
+          </DialogClose>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Popover open={isIconPickerOpen} onOpenChange={setIsIconPickerOpen}>
-            <PopoverTrigger asChild>
-              <button type="button" className="group relative w-fit" aria-label="Cambiar icono del evento">
-                <span className="flex size-14 items-center justify-center rounded-[16px] bg-soft-primary text-primary">
-                  <Icon className="size-6" />
-                </span>
-                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border border-border bg-card text-foreground transition-transform group-hover:scale-110">
-                  <Pencil className="size-3" />
-                </span>
-              </button>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Popover open={iconOpen} onOpenChange={setIconOpen}>
+            <PopoverTrigger
+              aria-label="Cambiar icono del evento"
+              className="focus-visible:ring-ring/50 relative w-fit rounded-[16px] outline-none focus-visible:ring-3"
+            >
+              <span className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-[16px]">
+                {createElement(eventIconFor(iconKey), { className: "size-6" })}
+              </span>
+              <span className="border-card bg-primary text-primary-foreground absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2">
+                <Pencil className="size-3" />
+              </span>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto rounded-[16px] border-border p-3">
-              <div className="grid grid-cols-4 gap-2">
-                {eventIcons.map((option) => (
+            <PopoverContent>
+              <div className="grid grid-cols-4 gap-1">
+                {EVENT_ICON_OPTIONS.map(({ key, label, Icon }) => (
                   <button
-                    key={option.value}
+                    key={key}
                     type="button"
-                    title={option.label}
-                    aria-label={option.label}
+                    aria-label={label}
+                    aria-pressed={key === iconKey}
                     onClick={() => {
-                      setIcon(option.value)
-                      setIsIconPickerOpen(false)
+                      setIconKey(key);
+                      setIconOpen(false);
                     }}
-                    className={cn(
-                      'flex size-12 items-center justify-center rounded-[12px] transition-colors',
-                      option.value === icon
-                        ? 'bg-soft-primary text-primary'
-                        : 'text-muted-foreground hover:bg-muted'
-                    )}
+                    className="text-text-primary hover:bg-muted focus-visible:ring-ring/50 aria-pressed:bg-primary/10 aria-pressed:text-primary flex size-12 items-center justify-center rounded-[12px] outline-none focus-visible:ring-3"
                   >
-                    <option.Icon className="size-5" />
+                    <Icon className="size-5" />
                   </button>
                 ))}
               </div>
@@ -121,74 +137,70 @@ export function EditEventDialog({ event }: { event: Event }) {
           </Popover>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="edit-event-name" className="text-base font-extrabold text-black">
-              Nombre del evento
-            </Label>
+            <Label htmlFor="edit-event-name">Nombre del evento</Label>
             <Input
               id="edit-event-name"
-              value={name}
-              onChange={(formEvent) => setName(formEvent.target.value)}
-              onBlur={() => setNameTouched(true)}
-              aria-invalid={nameTouched && isNameMissing}
-              aria-describedby={nameTouched && isNameMissing ? 'edit-event-name-error' : undefined}
-              className={fieldClass}
+              placeholder="Viaje a la cordillera"
+              aria-invalid={Boolean(errors.name)}
+              className="h-auto rounded-[6px] px-3 py-2 text-base"
+              {...register("name")}
             />
-            {nameTouched && isNameMissing && (
-              <p id="edit-event-name-error" className="text-sm font-medium text-destructive">
-                El nombre del evento es obligatorio
+            {errors.name && (
+              <p role="alert" className="text-destructive text-sm">
+                {errors.name.message}
               </p>
             )}
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <Label htmlFor="edit-event-description" className="text-base font-extrabold text-black">
-              Descripcion <span className="font-medium text-muted-foreground">(opcional)</span>
+            <Label htmlFor="edit-event-description">
+              Descripción <span className="text-text-secondary font-medium">(opcional)</span>
             </Label>
             <Textarea
               id="edit-event-description"
-              placeholder="Datos importantes para la distincion del evento"
-              value={description}
-              onChange={(formEvent) => setDescription(formEvent.target.value)}
-              className={cn(fieldClass, 'min-h-[84px]')}
+              placeholder="Datos importantes para la distinción del evento"
+              className="min-h-24 rounded-[6px] px-3 py-2 text-base"
+              {...register("description")}
             />
           </div>
 
-          {/*
-            La moneda se muestra pero no se toca. Cada gasto guarda su monto ya
-            convertido a la moneda del evento, congelado al cargarlo, asi que
-            cambiarla despues dejaria los totales y los saldos expresados en una
-            moneda que el evento ya no usa.
-
-            El candado es toda la explicacion que hay: el PO saco el texto que
-            decia el motivo.
-          */}
           <div className="flex flex-col gap-[6px]">
-            <Label className="text-base font-extrabold text-black">Moneda del evento</Label>
-            <div className="flex h-10 w-fit items-center gap-2 rounded-[8px] bg-muted px-4 text-base font-medium text-muted-foreground">
-              <Lock className="size-4" />
-              {currencyLabels[event.currency] ?? event.currency}
-            </div>
+            <Label>Moneda del evento</Label>
+            <p
+              aria-label="Moneda del evento"
+              className="border-input text-text-primary bg-muted w-fit rounded-[6px] border px-3 py-2 text-base"
+            >
+              {currencyLabel(event.baseCurrency)}
+            </p>
+            <p className="text-text-secondary text-sm font-medium">
+              La moneda no se puede cambiar después de crear el evento.
+            </p>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={close}
-              className="h-10 rounded-[8px] px-4 text-xl font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Cancelar
-            </Button>
+          {generalError && (
+            <Alert variant="destructive">
+              <AlertDescription>{generalError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex pt-2 sm:justify-end">
             <Button
               type="submit"
-              disabled={isLoading || isNameMissing}
-              className={cn(primaryButtonClass, 'gap-2 px-4')}
+              disabled={isSubmitting}
+              className="h-10 w-full rounded-[8px] px-5 text-xl font-medium sm:w-auto"
             >
-              {isLoading ? <Spinner className="size-4" /> : 'Guardar cambios'}
+              {isSubmitting ? (
+                <LoadingIndicator message="Guardando cambios…" spinnerClassName="size-5" />
+              ) : (
+                <>
+                  <Check className="size-5" />
+                  Guardar cambios
+                </>
+              )}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

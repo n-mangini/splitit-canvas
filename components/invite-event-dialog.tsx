@@ -1,105 +1,174 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Check, Copy, WandSparkles, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { fieldClass, primaryButtonClass } from '@/lib/form-styles'
-import { getInviteLink } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
-import type { Event } from '@/lib/types'
+import { useEffect, useState } from "react";
+import { UserPlus, X } from "lucide-react";
 
-/**
- * Compartir enlace de acceso (SPLT-008). Modal sobre el detalle, igual que
- * editar y eliminar el evento.
- *
- * El enlace lleva un token opaco: quien lo tiene entra al evento y maneja sus
- * gastos sin crear cuenta, asi que no puede ser un codigo adivinable. No hay
- * invitacion por email ni configuracion previa — el enlace ya existe y lo unico
- * que se hace es copiarlo.
- */
-export function InviteEventDialog({ event }: { event: Event }) {
-  const router = useRouter()
-  const [copied, setCopied] = useState(false)
+import {
+  buildEventInviteUrl,
+  EventError,
+  getEventInviteToken,
+  type EventDetail,
+} from "@/lib/events";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { LoadingIndicator } from "@/components/loading-indicator";
 
-  const inviteLink = getInviteLink(event.inviteCode)
-  const close = () => router.push(`/events/${event.id}`)
+type InviteEventDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: EventDetail;
+  onUnauthorized: () => void;
+};
+
+type LoadState =
+  { status: "loading" } | { status: "ready"; token: string } | { status: "error"; message: string };
+
+export function InviteEventDialog({
+  open,
+  onOpenChange,
+  event,
+  onUnauthorized,
+}: InviteEventDialogProps) {
+  const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const resetLocalState = () => {
+    setCopied(false);
+    setCopyError(null);
+    setState({ status: "loading" });
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) resetLocalState();
+    onOpenChange(next);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+
+    getEventInviteToken(event.id)
+      .then((token) => {
+        if (!cancelled) setState({ status: "ready", token });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err instanceof EventError && err.type === "unauthorized") {
+          onUnauthorized();
+          return;
+        }
+        setState({
+          status: "error",
+          message:
+            err instanceof EventError
+              ? err.message
+              : "No pudimos generar el enlace. Probá de nuevo.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, event.id, retryKey, onUnauthorized]);
+
+  const inviteUrl = state.status === "ready" ? buildEventInviteUrl(state.token) : "";
 
   const handleCopy = async () => {
+    if (state.status !== "ready") return;
     try {
-      await navigator.clipboard.writeText(inviteLink)
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setCopyError(null);
     } catch {
-      // El portapapeles puede estar bloqueado dentro del artboard del canvas.
-      // La confirmacion es lo que la historia pide mostrar, asi que se muestra
-      // igual: el enlace esta a la vista y se puede copiar a mano.
+      setCopied(false);
+      setCopyError("No pudimos copiar el enlace. Probá de nuevo.");
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  };
+
+  const retry = () => {
+    resetLocalState();
+    setRetryKey((key) => key + 1);
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && close()}>
-      <DialogContent
-        showCloseButton={false}
-        className="flex flex-col gap-4 rounded-[24px] border-border bg-card p-6 shadow-none sm:max-w-[480px] sm:p-8"
-      >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent aria-label="Invitar al evento" className="sm:max-w-[480px]">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col">
+          <div>
             <span
-              aria-hidden
-              className="mb-2 flex size-12 items-center justify-center rounded-[16px] bg-soft-primary text-primary"
+              aria-hidden="true"
+              className="bg-primary/10 text-primary mb-2 flex size-12 items-center justify-center rounded-[16px]"
             >
-              <WandSparkles className="size-6" />
+              <UserPlus className="size-6" />
             </span>
-            <DialogTitle className="text-[28px] font-extrabold leading-[1.15] text-foreground">
-              Invitar al evento
-            </DialogTitle>
+            <DialogTitle className="text-[28px]">Invitar al evento</DialogTitle>
+            <DialogDescription className="text-muted-foreground mt-1 text-sm leading-6 font-medium">
+              Este enlace no vence ni puede revocarse. Cualquiera con el enlace puede usarlo.
+            </DialogDescription>
           </div>
-
-          <button
-            type="button"
-            onClick={close}
+          <DialogClose
             aria-label="Cerrar"
-            className="-mr-2 -mt-1 flex size-10 shrink-0 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="text-text-secondary hover:text-text-primary hover:bg-muted -mt-1 -mr-2 flex size-10 shrink-0 items-center justify-center rounded-[8px] transition-colors"
           >
             <X className="size-5" />
-          </button>
+          </DialogClose>
         </div>
 
-        <DialogDescription className="text-sm font-medium leading-6 text-muted-foreground">
-          Compartí este enlace y cualquiera puede entrar a «{event.name}», con cuenta o sin
-          cuenta.
-        </DialogDescription>
+        {state.status === "loading" && (
+          <section className="flex items-center justify-center gap-2 py-6">
+            <LoadingIndicator
+              message="Generando enlace…"
+              spinnerClassName="size-5"
+              className="text-text-secondary text-sm font-medium"
+            />
+          </section>
+        )}
 
-        <div className="flex flex-col gap-[6px]">
-          <Label htmlFor="invite-link" className="text-base font-extrabold text-black">
-            Enlace de acceso
-          </Label>
-          <Input
-            id="invite-link"
-            readOnly
-            value={inviteLink}
-            onFocus={(field) => field.currentTarget.select()}
-            className={cn(fieldClass, 'text-sm')}
-          />
-        </div>
+        {state.status === "ready" && (
+          <div className="flex flex-col gap-3">
+            <Input
+              readOnly
+              value={inviteUrl}
+              aria-label="Enlace de invitación"
+              className="h-auto rounded-[6px] px-3 py-2 text-base"
+            />
+            <Button
+              type="button"
+              onClick={handleCopy}
+              className="h-10 rounded-[8px] px-4 text-xl font-medium"
+            >
+              {copied ? "Enlace copiado" : "Copiar enlace"}
+            </Button>
+            {copyError && (
+              <Alert variant="destructive">
+                <AlertDescription>{copyError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
 
-        <Button onClick={handleCopy} className={cn(primaryButtonClass, 'w-full gap-2')}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-          {copied ? 'Enlace copiado' : 'Copiar enlace'}
-        </Button>
-
-        {/* El enlace no se vence ni se puede dar de baja: hoy el producto no
-            tiene como revocarlo, y quien lo reciba entra siempre. Decirlo acá
-            es lo que evita que se comparta sin pensarlo. */}
-        <p className="text-sm font-medium leading-6 text-muted-foreground">
-          El enlace no vence y no se puede dar de baja: quien lo reciba va a poder entrar al
-          evento.
-        </p>
+        {state.status === "error" && (
+          <section className="flex flex-col items-start gap-3">
+            <Alert variant="destructive">
+              <AlertDescription>{state.message}</AlertDescription>
+            </Alert>
+            <Button type="button" variant="outline" onClick={retry}>
+              Reintentar
+            </Button>
+          </section>
+        )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

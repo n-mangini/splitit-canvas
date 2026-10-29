@@ -1,84 +1,104 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Spinner } from '@/components/ui/spinner'
-import type { Event } from '@/lib/types'
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
-/** Un plural que no obligue a escribir "1 gasto(s)". */
-function count(amount: number, singular: string, plural: string) {
-  return `${amount} ${amount === 1 ? singular : plural}`
-}
+import { deleteEvent, EventError, type EventDetail } from "@/lib/events";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoadingIndicator } from "@/components/loading-indicator";
 
-/**
- * Eliminar evento (SPLT-021).
- *
- * La confirmacion dice cuanto se lleva puesto. Un "estas seguro?" generico no
- * alcanza: el evento es el registro de quien le debe cuanto a quien, y se le
- * borra a todos los integrantes, no solo a quien aprieta el boton.
- */
-export function DeleteEventDialog({ event }: { event: Event }) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+type DeleteEventDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: EventDetail;
+  onDeleted: () => void;
+  onUnauthorized: () => void;
+};
 
-  const close = () => router.push(`/events/${event.id}`)
+export function DeleteEventDialog({
+  open,
+  onOpenChange,
+  event,
+  onDeleted,
+  onUnauthorized,
+}: DeleteEventDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDelete = async () => {
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    toast.success(`Eliminamos «${event.name}»`)
-    router.push('/events')
-  }
+  const handleOpenChange = (next: boolean) => {
+    if (next) setError(null);
+    onOpenChange(next);
+  };
+
+  const handleConfirm = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await deleteEvent(event.id);
+      onDeleted();
+    } catch (err) {
+      if (err instanceof EventError && err.type === "unauthorized") {
+        onUnauthorized();
+        return;
+      }
+      setError(
+        err instanceof EventError ? err.message : "No pudimos eliminar el evento. Probá de nuevo."
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
-    <AlertDialog open onOpenChange={(open) => !open && close()}>
-      <AlertDialogContent className="rounded-[24px] border-border bg-card p-6 shadow-none sm:max-w-[480px] sm:p-8">
-        <AlertDialogHeader>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        aria-label="Eliminar evento"
+        className="border-border shadow-none sm:max-w-[480px]"
+      >
+        <div>
           <span
-            aria-hidden
-            className="mb-2 flex size-12 items-center justify-center rounded-[16px] bg-destructive/10 text-destructive"
+            aria-hidden="true"
+            className="bg-destructive/10 text-destructive mb-2 flex size-12 items-center justify-center rounded-[16px]"
           >
             <Trash2 className="size-6" />
           </span>
-          <AlertDialogTitle className="text-[28px] font-extrabold leading-[1.15] text-foreground">
-            Eliminar «{event.name}»
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm font-medium leading-6 text-muted-foreground">
-            Se eliminan tambien {count(event.expenses.length, 'gasto', 'gastos')} y{' '}
-            {count(event.participants.length, 'integrante', 'integrantes')}. El resto de los
-            integrantes deja de ver el evento. Esta accion no se puede deshacer.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-          <AlertDialogCancel className="mt-0 h-10 rounded-[8px] border-0 px-4 text-xl font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-            Cancelar
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={isLoading}
-            onClick={(clickEvent) => {
-              // El AlertDialog cierra solo al confirmar; aca el modal tiene que
-              // quedarse mientras se guarda.
-              clickEvent.preventDefault()
-              handleDelete()
-            }}
-            className="h-10 gap-2 rounded-[8px] bg-destructive px-4 text-xl font-medium text-destructive-foreground hover:bg-destructive/90"
+          <DialogTitle className="text-[28px]">Eliminar «{event.name}»</DialogTitle>
+          <DialogDescription className="text-muted-foreground text-sm leading-6 font-medium">
+            Se eliminan también{" "}
+            {event.memberCount === 1 ? "1 integrante" : `${event.memberCount} integrantes`}. El
+            resto de los integrantes deja de ver el evento. Esta acción no se puede deshacer.
+          </DialogDescription>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isDeleting}
+            onClick={() => onOpenChange(false)}
+            className="text-muted-foreground hover:text-foreground mt-0 h-10 rounded-[8px] border-0 px-4 text-xl font-medium"
           >
-            {isLoading ? <Spinner className="size-4" /> : 'Eliminar evento'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            disabled={isDeleting}
+            onClick={handleConfirm}
+            className="bg-destructive hover:bg-destructive/90 h-10 gap-2 rounded-[8px] px-4 text-xl font-medium text-white"
+          >
+            {isDeleting ? <LoadingIndicator message="Eliminando evento…" /> : "Eliminar evento"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
