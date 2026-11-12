@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2, UserPlus } from "lucide-react";
 
 import { EventError, getEventById, type EventDetail, type EventSummary } from "@/lib/events";
+import { recalledInvitationPath } from "@/lib/invitations";
 import { showAppToast } from "@/lib/toast";
+import { useSession } from "@/lib/use-session";
 import { EventNotFound } from "@/components/event-not-found";
 import { EventDetailContent } from "@/components/event-detail-content";
 import { EditEventDialog } from "@/components/edit-event-dialog";
@@ -26,10 +28,12 @@ type LoadState =
 
 export function EventDetailView({ id }: { id: string }) {
   const router = useRouter();
+  const session = useSession();
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [inviting, setInviting] = useState(false);
+  const [expenseCount, setExpenseCount] = useState<number | null>(null);
 
   // Canvas: artboards con el modal ya abierto.
   useCanvasParam("modal", "invitar", () => setInviting(true));
@@ -63,8 +67,8 @@ export function EventDetailView({ id }: { id: string }) {
   }, [fetchEvent]);
 
   useEffect(() => {
-    if (state.status === "unauthorized") router.replace("/login");
-  }, [state.status, router]);
+    if (state.status === "unauthorized") router.replace(recalledInvitationPath(id) ?? "/login");
+  }, [state.status, id, router]);
 
   const retry = () => {
     setState({ status: "loading" });
@@ -101,13 +105,17 @@ export function EventDetailView({ id }: { id: string }) {
     return (
       <>
         <div className="flex items-center justify-between">
-          <Link
-            href="/eventos"
-            aria-label="Volver a eventos"
-            className="border-border text-text-secondary hover:text-text-primary hover:bg-muted focus-visible:ring-ring/50 inline-flex size-12 items-center justify-center rounded-full border outline-none focus-visible:ring-3"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
+          {state.event.guestMemberId == null ? (
+            <Link
+              href="/eventos"
+              aria-label="Volver a eventos"
+              className="border-border text-text-secondary hover:text-text-primary hover:bg-muted focus-visible:ring-ring/50 inline-flex size-12 items-center justify-center rounded-full border outline-none focus-visible:ring-3"
+            >
+              <ArrowLeft className="size-5" />
+            </Link>
+          ) : (
+            <span />
+          )}
 
           {state.event.isOwner && (
             <div className="flex items-center gap-2">
@@ -149,6 +157,8 @@ export function EventDetailView({ id }: { id: string }) {
           event={state.event}
           onUnauthorized={handleUnauthorized}
           onNotFound={handleNotFound}
+          onExpenseCountChange={setExpenseCount}
+          refreshExpenses={deleting}
         />
 
         <InviteEventDialog
@@ -168,6 +178,7 @@ export function EventDetailView({ id }: { id: string }) {
           open={deleting}
           onOpenChange={setDeleting}
           event={state.event}
+          expenseCount={expenseCount}
           onDeleted={handleDeleted}
           onUnauthorized={() => setState({ status: "unauthorized" })}
         />
@@ -177,13 +188,16 @@ export function EventDetailView({ id }: { id: string }) {
 
   return (
     <>
-      <Link
-        href="/eventos"
-        className="text-text-secondary hover:text-text-primary inline-flex items-center gap-2 text-sm font-medium"
-      >
-        <ArrowLeft className="size-4" />
-        Volver a eventos
-      </Link>
+      {/* Un invitado no tiene lista de eventos adonde volver. */}
+      {session.status !== "guest" && (
+        <Link
+          href="/eventos"
+          className="text-text-secondary hover:text-text-primary inline-flex items-center gap-2 text-sm font-medium"
+        >
+          <ArrowLeft className="size-4" />
+          Volver a eventos
+        </Link>
+      )}
 
       {state.status === "loading" && (
         <section className="flex items-center justify-center gap-2 py-16">

@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingIndicator } from "@/components/loading-indicator";
 import { AuthLayout } from "@/components/auth-layout";
-import { GoogleAuthSection, googleMessage } from "@/components/google-auth-button";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  GOOGLE_LOGIN_ERROR_MESSAGE,
   login,
   LoginError,
   LoginInput,
@@ -30,10 +31,10 @@ export default function LoginPage() {
 
 function LoginForm() {
   const router = useRouter();
-  const redirect = useSearchParams().get("redirect");
-  // Canvas: los mensajes de Google (SPLT-019) salen de la direccion.
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [generalError, setGeneralError] = useState<string | null>(
-    googleMessage(useSearchParams().get("google"))
+    searchParams.get("error") === "google" ? GOOGLE_LOGIN_ERROR_MESSAGE : null
   );
   const [showPassword, setShowPassword] = useState(false);
   const {
@@ -127,8 +128,10 @@ function LoginForm() {
           </Button>
         </FieldGroup>
       </form>
-      {/* Canvas: SPLT-019, todavia no esta en el front oficial. */}
-      <GoogleAuthSection redirect={redirect} />
+      <GoogleSignInButton
+        onSuccess={() => router.push(postLoginPath(redirect))}
+        onError={() => setGeneralError(GOOGLE_LOGIN_ERROR_MESSAGE)}
+      />
     </AuthLayout>
   );
 }

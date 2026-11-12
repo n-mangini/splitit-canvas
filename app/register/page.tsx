@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingIndicator } from "@/components/loading-indicator";
 import { AuthLayout } from "@/components/auth-layout";
-import { GoogleAuthSection, googleMessage } from "@/components/google-auth-button";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  googleLoginErrorPath,
+  postLoginPath,
   registerUser,
   RegisterError,
   RegisterInput,
@@ -29,11 +31,9 @@ export default function RegisterPage() {
 
 function RegisterForm() {
   const router = useRouter();
-  const loginPath = withRedirect("/login", useSearchParams().get("redirect"));
-  // Canvas: los mensajes de Google (SPLT-019) salen de la direccion.
-  const [generalError, setGeneralError] = useState<string | null>(
-    googleMessage(useSearchParams().get("google"))
-  );
+  const redirect = useSearchParams().get("redirect");
+  const loginPath = withRedirect("/login", redirect);
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -48,7 +48,7 @@ function RegisterForm() {
     try {
       await registerUser(data);
       showAppToast("success", "¡Cuenta creada con éxito!");
-      router.push(loginPath);
+      router.push(postLoginPath(redirect));
     } catch (err) {
       if (err instanceof RegisterError) {
         if (err.type === "email-taken") {
@@ -129,8 +129,10 @@ function RegisterForm() {
           </Button>
         </FieldGroup>
       </form>
-      {/* Canvas: SPLT-019, todavia no esta en el front oficial. */}
-      <GoogleAuthSection redirect={null} />
+      <GoogleSignInButton
+        onSuccess={() => router.push(postLoginPath(redirect))}
+        onError={() => router.push(googleLoginErrorPath(redirect))}
+      />
     </AuthLayout>
   );
 }
