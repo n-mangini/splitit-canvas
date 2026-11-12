@@ -36,12 +36,13 @@ La raiz abre el canvas, no la app:
 | `/inicio` | la landing (vive fuera de `/` justamente porque `/` es del canvas) |
 | `/login`, `/register` | acceso |
 | `/eventos`, `/eventos/[id]`, `/perfil` | la app, con las mismas rutas que el front oficial |
-| `/eventos/invitacion/[token]` | entrada por invitacion |
-| `/join/[token]/...` | pasos de invitacion que el front oficial todavia no tiene |
+| `/eventos/invitacion/[token]` | entrada por invitacion, con cuenta o como invitado sin cuenta |
 
 Los estados que el front oficial resuelve dentro de la pantalla se piden por query para
-poder linkearlos desde el canvas: `?modal=crear|editar|eliminar|invitar|gasto`,
-`?tab=saldos|integrantes`, `?escenario=vacio|sin-sesion|sin-integrantes|ya-vinculado`.
+poder linkearlos desde el canvas: `?modal=crear|editar|eliminar|invitar|gasto|cuenta-existente`,
+`?tab=saldos|integrantes`, `?paso=quien-sos`, y
+`?escenario=vacio|sin-sesion|invitado|sin-integrantes|ya-vinculado|google|cuenta-google|cuenta-existente`
+(los escenarios se combinan con coma: `?escenario=sin-sesion,sin-integrantes`).
 
 **Nunca dejar una pantalla en `/`**: su iframe cargaria el canvas dentro de si mismo.
 
@@ -61,9 +62,17 @@ agregados del canvas, que son pocos y estan marcados con un comentario `Canvas:`
 | sumar o mover una pantalla del canvas | `lib/prototype-map.ts` — unica fuente de verdad del mapa |
 | construir una pantalla nueva | la skill `construir-pantalla` de `splitit-agents` |
 
-Una historia que el front oficial todavia no tiene se construye con sus mismos componentes
-(como el boton de Google de SPLT-019 o `/join/...` de SPLT-022), para que se vea parte de
-la misma app.
+Una historia que el front oficial todavia no tiene se construye con sus mismos componentes,
+para que se vea parte de la misma app.
+
+El boton de Google es la unica pieza que no puede ser identica: el oficial dibuja el de
+Google Identity Services, que necesita un client ID y un dominio autorizado. Sin client ID,
+`GoogleSignInButton` muestra la imitacion de `components/google-auth-button.tsx`, dentro del
+mismo armado (separador, cargando y dialogo de cuenta existente).
+
+La ultima sincronizacion fue contra `SplitItLab/SplitIt@1ea5fd2` (12/11). Para la proxima,
+un merge de tres vias por archivo (`git merge-file` con base en ese commit) conserva los
+agregados `Canvas:`.
 
 ## Convenciones que no estan en ningun archivo
 

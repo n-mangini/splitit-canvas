@@ -65,16 +65,16 @@ export const screens: Screen[] = [
   },
   {
     // Volver de Google sin completar el ingreso: cancelo o rechazo el permiso.
-    route: '/login?google=error',
+    route: '/login?error=google',
     title: 'Iniciar sesión · Google no completó',
     epic: 'Acceso',
     stories: [{ id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 }],
     hidden: true,
   },
   {
-    // Email y contraseña sobre una cuenta que ya ingresa con Google.
-    route: '/login?google=cuenta-google',
-    title: 'Iniciar sesión · cuenta de Google',
+    // Ingresar con Google con un email que ya tiene cuenta con contraseña.
+    route: '/login?escenario=cuenta-existente&modal=cuenta-existente',
+    title: 'Ingresar con Google · ya tenés una cuenta',
     epic: 'Acceso',
     stories: [{ id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 }],
     hidden: true,
@@ -87,6 +87,14 @@ export const screens: Screen[] = [
       { id: 'SPLT-003', title: 'Ver y editar mi cuenta', issue: 3 },
       { id: 'SPLT-004', title: 'Cerrar sesión', issue: 4 },
     ],
+  },
+  {
+    // La cuenta que ingresa con Google no puede cambiar su email.
+    route: '/perfil?escenario=google&modal=editar',
+    title: 'Mi cuenta · cuenta de Google',
+    epic: 'Cuenta',
+    stories: [{ id: 'SPLT-019', title: 'Ingresar con Google', issue: 19 }],
+    hidden: true,
   },
   {
     route: '/eventos?modal=crear',
@@ -120,10 +128,19 @@ export const screens: Screen[] = [
     stories: [{ id: 'SPLT-020', title: 'Editar evento', issue: 20 }],
   },
   {
-    route: '/eventos/1?modal=eliminar',
+    // Un evento sin gastos se puede eliminar.
+    route: '/eventos/4?modal=eliminar',
     title: 'Eliminar evento',
     epic: 'Eventos',
     stories: [{ id: 'SPLT-021', title: 'Eliminar evento', issue: 21 }],
+  },
+  {
+    // Con gastos no: primero hay que borrarlos.
+    route: '/eventos/1?modal=eliminar',
+    title: 'Eliminar evento · tiene gastos',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-021', title: 'Eliminar evento', issue: 21 }],
+    hidden: true,
   },
   {
     route: '/eventos/1?tab=gastos',
@@ -135,6 +152,14 @@ export const screens: Screen[] = [
       { id: 'SPLT-013', title: 'Modificar gasto', issue: 13 },
       { id: 'SPLT-014', title: 'Eliminar gasto', issue: 14 },
     ],
+  },
+  {
+    // Los gastos llegan de a 20: el resto se pide con «Ver más gastos».
+    route: '/eventos/2?tab=gastos',
+    title: 'Detalle de evento · más de una página de gastos',
+    epic: 'Eventos',
+    stories: [{ id: 'SPLT-012', title: 'Consultar gastos del evento', issue: 12 }],
+    hidden: true,
   },
   {
     route: '/eventos/1?modal=gasto',
@@ -187,29 +212,44 @@ export const screens: Screen[] = [
     hidden: true,
   },
   {
-    // Entrar sin cuenta tambien pasa por identificarse: si no, el invitado
-    // carga gastos en nombre de cualquiera y no tiene saldo propio.
-    route: `/join/${TOKEN}/quien-sos`,
-    title: 'Sin cuenta · quién sos',
-    epic: 'Invitaciones',
-    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
-  },
-  {
-    // La entrada: el acceso por enlace del front oficial con la opcion de
-    // seguir sin cuenta, que es de esta historia.
-    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion&alcance=SPLT-022`,
+    // La entrada sin sesion: con cuenta o sin cuenta.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion`,
     title: 'Sin cuenta · entrada',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
     hidden: true,
   },
   {
-    // La salida para quien no esta en la lista que armo el dueño.
-    route: `/join/${TOKEN}/soy-nuevo`,
-    title: 'Sin cuenta · no estoy en la lista',
+    // Entrar sin cuenta tambien pasa por identificarse: si no, el invitado
+    // carga gastos en nombre de cualquiera y no tiene saldo propio.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion&paso=quien-sos`,
+    title: 'Sin cuenta · quién sos',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
+  },
+  {
+    // Ya entro como invitado desde este dispositivo: vuelve directo.
+    route: `/eventos/invitacion/${TOKEN}?escenario=invitado`,
+    title: 'Sin cuenta · ya elegiste quién sos',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
     hidden: true,
+  },
+  {
+    // Todos ya entraron con su cuenta: sin cuenta no queda a quien elegir.
+    route: `/eventos/invitacion/${TOKEN}?escenario=sin-sesion,sin-integrantes&paso=quien-sos`,
+    title: 'Sin cuenta · sin integrantes libres',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
+    hidden: true,
+  },
+  {
+    // El evento visto por el invitado: solo su evento, sin editar ni borrar
+    // gastos, y con «Salir» en lugar del menu de la cuenta.
+    route: '/eventos/1?escenario=invitado',
+    title: 'Sin cuenta · el evento del invitado',
+    epic: 'Invitaciones',
+    stories: [{ id: 'SPLT-022', title: 'Acceder al evento sin cuenta', issue: 22 }],
   },
   {
     route: `/eventos/invitacion/${TOKEN}`,
@@ -229,15 +269,6 @@ export const screens: Screen[] = [
     // Todos los integrantes ya entraron con su cuenta: no queda ninguno libre.
     route: `/eventos/invitacion/${TOKEN}?escenario=sin-integrantes`,
     title: 'Con cuenta · sin integrantes libres',
-    epic: 'Invitaciones',
-    stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
-    hidden: true,
-  },
-  {
-    // Sumarse como integrante nuevo llegando con cuenta. Todavia no esta en el
-    // front oficial.
-    route: `/join/${TOKEN}/vincular/soy-nuevo`,
-    title: 'Con cuenta · no estoy en la lista',
     epic: 'Invitaciones',
     stories: [{ id: 'SPLT-010', title: 'Acceder al evento con cuenta', issue: 10 }],
     hidden: true,

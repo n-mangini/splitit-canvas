@@ -17,11 +17,12 @@ import {
 import { logout, LogoutError } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Field, FieldLabel, FieldError, FieldGroup } from "@/components/ui/field";
+import { Field, FieldLabel, FieldError, FieldGroup, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingIndicator } from "@/components/loading-indicator";
+import { canvasParam } from "@/lib/canvas-state";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -49,6 +50,11 @@ export default function ProfilePage() {
       .then((data) => {
         if (cancelled) return;
         setProfile(data);
+        // Canvas: artboard con el formulario de edicion abierto.
+        if (canvasParam("modal") === "editar") {
+          reset({ name: data.name, email: data.email });
+          setEditing(true);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -62,7 +68,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, reset]);
 
   const startEditing = () => {
     if (!profile) return;
@@ -188,9 +194,16 @@ export default function ProfilePage() {
                         type="email"
                         autoComplete="email"
                         aria-invalid={!!errors.email}
-                        className="h-11"
+                        // readOnly, not disabled: the unchanged email still travels with the form.
+                        readOnly={profile.signsInWithGoogle}
+                        className="read-only:bg-muted read-only:text-muted-foreground h-11"
                         {...register("email")}
                       />
+                      {profile.signsInWithGoogle && (
+                        <FieldDescription>
+                          Tu email viene de Google y no se puede cambiar.
+                        </FieldDescription>
+                      )}
                       <FieldError errors={[errors.email]} />
                     </Field>
                   </div>

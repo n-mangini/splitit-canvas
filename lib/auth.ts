@@ -32,7 +32,7 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-export type LoginErrorType = "invalid-credentials" | "network" | "server-error";
+export type LoginErrorType = "invalid-credentials" | "google-account" | "network" | "server-error";
 
 export class LoginError extends Error {
   constructor(
@@ -80,6 +80,13 @@ export type SessionUser = {
   email: string;
 };
 
+export type GuestSession = {
+  type: "guest";
+  eventId: number;
+  memberId: number;
+  name: string;
+};
+
 export type LogoutErrorType = "network" | "server-error";
 
 export class LogoutError extends Error {
@@ -117,7 +124,13 @@ async function mockLogin(input: LoginInput): Promise<void> {
   sessionStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(user));
 }
 
-async function mockGetSession(): Promise<SessionUser | null> {
+async function mockLoginWithGoogle(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  const user: SessionUser = { id: 1, name: "Ada Lovelace", email: "ada@example.com" };
+  sessionStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(user));
+}
+
+async function mockGetSession(): Promise<SessionUser | GuestSession | null> {
   await new Promise((resolve) => setTimeout(resolve, 300));
   const raw = sessionStorage.getItem(MOCK_SESSION_KEY);
   return raw ? (JSON.parse(raw) as SessionUser) : null;
@@ -171,6 +184,9 @@ export async function login(input: LoginInput): Promise<void> {
       if (err.status === 401) {
         throw new LoginError("invalid-credentials", "Email o contraseña incorrectos.");
       }
+      if (err.status === 409) {
+        throw new LoginError("google-account", "Esta cuenta ahora ingresa con Google");
+      }
       if (err.status === 0) {
         throw new LoginError("network", "No pudimos conectar con el servidor.");
       }
@@ -180,13 +196,51 @@ export async function login(input: LoginInput): Promise<void> {
   }
 }
 
-export async function getSession(): Promise<SessionUser | null> {
+export const GOOGLE_LOGIN_ERROR_MESSAGE = "No pudimos completar el ingreso con Google";
+
+export function googleLoginErrorPath(redirect: string | null): string {
+  const path = withRedirect("/login", redirect);
+  return `${path}${path.includes("?") ? "&" : "?"}error=google`;
+}
+
+export type ExistingAccountChoice = "LINK" | "REPLACE";
+
+// The email already has a password account, so the person has to say what to do with it.
+export class GoogleAccountExistsError extends Error {
+  constructor() {
+    super("Ya existe una cuenta con ese email.");
+    this.name = "GoogleAccountExistsError";
+  }
+}
+
+// `credential` is the ID token Google returns; the API verifies it and opens the session.
+export async function loginWithGoogle(
+  credential: string,
+  existingAccount?: ExistingAccountChoice
+): Promise<void> {
+  if (USE_MOCK) {
+    return mockLoginWithGoogle();
+  }
+  try {
+    await request<void>("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential, existingAccount }),
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 409) {
+      throw new GoogleAccountExistsError();
+    }
+    throw err;
+  }
+}
+
+export async function getSession(): Promise<SessionUser | GuestSession | null> {
   if (USE_MOCK) {
     return mockGetSession();
   }
   try {
-    const user = await request<SessionUser | null>("/api/auth/session");
-    return user ?? null;
+    const session = await request<SessionUser | GuestSession | null>("/api/auth/session");
+    return session ?? null;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       return null;

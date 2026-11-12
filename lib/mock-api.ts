@@ -9,6 +9,10 @@
 // - `?escenario=sin-sesion`      sin cuenta iniciada (la landing ya arranca asi)
 // - `?escenario=sin-integrantes` invitacion donde todos ya entraron con su cuenta
 // - `?escenario=ya-vinculado`    invitacion de una cuenta que ya es integrante
+// - `?escenario=invitado`        sesion de invitado sin cuenta (Francisco, en la Juntada Asado)
+// - `?escenario=google`          la cuenta ingresa con Google (Mi cuenta: email fijo)
+// - `?escenario=cuenta-google`   el login con contraseña rechaza una cuenta de Google
+// - `?escenario=cuenta-existente` Google con un email que ya tiene cuenta (ver google-auth-button)
 
 import { ApiError } from "@/lib/api";
 
@@ -37,6 +41,10 @@ export const INVITE_TOKEN = "r7Qk2Vx9mLpZ4tHnCwB3sd";
 
 const USER = { id: 1, name: "Nicolas", email: "nicolas@email.com" };
 
+// Francisco es el integrante sin cuenta: es quien entra como invitado.
+const GUEST = { type: "guest" as const, eventId: 1, memberId: 2, name: "Francisco" };
+type Guest = typeof GUEST;
+
 // Francisco no tiene cuenta a proposito: es el integrante que queda libre para
 // vincular cuando alguien entra por el enlace con su cuenta.
 const members = (): Member[] => [
@@ -59,7 +67,9 @@ const RATES_TO_ARS: Record<string, number> = {
 
 const store = {
   user: { ...USER },
-  nextId: 100,
+  // Sesion abierta en esta pestaña: la del escenario hasta que se entra o se sale.
+  session: undefined as "user" | Guest | null | undefined,
+  nextId: 1000,
   events: [
     {
       id: 1,
@@ -101,8 +111,8 @@ const store = {
     expense(3, 1, "Carbon y leña", 6800, 3),
     expense(4, 1, "Ensaladas y pan", 9200, 2),
     expense(5, 1, "Postre y helado", 7400, 1),
-    expense(6, 2, "Alquiler Enero", 150000, 1, "2024-01-01"),
-    expense(7, 2, "Luz", 8500, 2, "2024-01-10"),
+    // El depto junta mas de una pagina de gastos (la API trae de a 20).
+    ...departmentExpenses(),
   ] as MockExpense[],
 };
 
@@ -128,13 +138,93 @@ function expense(
   };
 }
 
-function scenario(): string | null {
-  if (typeof window === "undefined") return null;
+function departmentExpenses(): MockExpense[] {
+  const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"];
+  const bills: [string, number, number, string][] = [
+    ["Alquiler", 150000, 1, "01"],
+    ["Expensas", 42000, 3, "05"],
+    ["Luz", 8500, 2, "10"],
+    ["Internet", 12000, 4, "15"],
+  ];
+  return months.flatMap((month, i) =>
+    bills.map(([bill, amount, payer, day], j) =>
+      expense(
+        6 + i * bills.length + j,
+        2,
+        `${bill} ${month}`,
+        amount,
+        payer,
+        `2024-${String(i + 1).padStart(2, "0")}-${day}`
+      )
+    )
+  );
+}
+
+const PAGE_SIZE = 20;
+
+// Mas nuevo primero; a igual fecha, el de id mas alto. Igual que la API.
+function byNewest(a: MockExpense, b: MockExpense) {
+  return b.expenseDate.localeCompare(a.expenseDate) || b.id - a.id;
+}
+
+function expensePage(event: MockEvent, query: URLSearchParams) {
+  const all = store.expenses.filter((e) => e.eventId === event.id).sort(byNewest);
+  const beforeDate = query.get("beforeDate");
+  const beforeId = Number(query.get("beforeId"));
+  const rest = beforeDate
+    ? all.filter(
+        (e) => e.expenseDate < beforeDate || (e.expenseDate === beforeDate && e.id < beforeId)
+      )
+    : all;
+  return {
+    items: rest.slice(0, PAGE_SIZE),
+    hasNext: rest.length > PAGE_SIZE,
+    totalCount: all.length,
+    totalAmount: round(all.reduce((sum, e) => sum + e.baseAmount, 0)),
+  };
+}
+
+// La sesion sobrevive a una recarga como la cookie de la API real. Se guarda en
+// `window.name` porque es de cada iframe: un artboard no le pasa su sesion a otro.
+const SESSION_PREFIX = "splitit-canvas-session:";
+
+function savedSession(): "user" | Guest | null | undefined {
+  if (typeof window === "undefined" || !window.name.startsWith(SESSION_PREFIX)) return undefined;
+  try {
+    return JSON.parse(window.name.slice(SESSION_PREFIX.length));
+  } catch {
+    return undefined;
+  }
+}
+
+function setSession(session: "user" | Guest | null) {
+  store.session = session;
+  if (typeof window !== "undefined") window.name = SESSION_PREFIX + JSON.stringify(session);
+}
+
+function currentSession(esc: Set<string>): typeof USER | Guest | null {
+  // Al abrir el artboard manda su escenario; si no trae uno, la sesion guardada.
+  if (store.session === undefined) {
+    if (esc.has("sin-sesion")) store.session = null;
+    else if (esc.has("invitado")) store.session = GUEST;
+    else store.session = savedSession() ?? "user";
+  }
+  return store.session === "user" ? store.user : store.session;
+}
+
+function currentGuest(esc: Set<string>): Guest | null {
+  const session = currentSession(esc);
+  return session && "type" in session ? session : null;
+}
+
+// Se pueden combinar separados por coma: `?escenario=sin-sesion,sin-integrantes`.
+function scenario(): Set<string> {
+  if (typeof window === "undefined") return new Set();
   const fromQuery = new URLSearchParams(window.location.search).get("escenario");
-  if (fromQuery) return fromQuery;
+  if (fromQuery) return new Set(fromQuery.split(","));
   // La landing redirige a Mis eventos si hay sesion: en el canvas se ve sin.
-  if (window.location.pathname.startsWith("/inicio")) return "sin-sesion";
-  return null;
+  if (window.location.pathname.startsWith("/inicio")) return new Set(["sin-sesion"]);
+  return new Set();
 }
 
 function summary(event: MockEvent) {
@@ -203,14 +293,28 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
   let m: RegExpMatchArray | null;
 
   // Acceso
-  if (path === "/api/auth/session") return esc === "sin-sesion" ? null : store.user;
-  if (path === "/api/auth/login" || path === "/api/auth/register") return undefined;
-  if (path === "/api/auth/logout") return undefined;
+  if (path === "/api/auth/session") return currentSession(esc);
+  if (path === "/api/auth/login") {
+    if (esc.has("cuenta-google")) throw new ApiError(409, "Esta cuenta ingresa con Google");
+    setSession("user");
+    return undefined;
+  }
+  if (path === "/api/auth/register" || path === "/api/auth/google") {
+    setSession("user");
+    return undefined;
+  }
+  if (path === "/api/auth/logout") {
+    setSession(null);
+    return undefined;
+  }
   if (path === "/api/me") {
+    const signsInWithGoogle = esc.has("google");
     if (method === "PUT" || method === "PATCH") {
-      store.user = { ...store.user, ...(body as { name?: string; email?: string }) };
+      const { name, email } = body as { name?: string; email?: string };
+      store.user = { ...store.user, name: name ?? store.user.name };
+      if (!signsInWithGoogle && email) store.user.email = email;
     }
-    return store.user;
+    return { ...store.user, signsInWithGoogle };
   }
 
   // Eventos
@@ -232,7 +336,7 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
       store.events.unshift(event);
       return summary(event);
     }
-    return esc === "vacio" ? [] : store.events.map(summary);
+    return esc.has("vacio") ? [] : store.events.map(summary);
   }
 
   if ((m = path.match(/^\/api\/events\/([^/]+)$/))) {
@@ -249,7 +353,14 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
       store.events = store.events.filter((e) => e !== event);
       return undefined;
     }
-    return { ...summary(event), members: event.members, isOwner: true };
+    const guest = currentGuest(esc);
+    if (guest && guest.eventId !== event.id) throw new ApiError(403, "No tenés acceso a este evento.");
+    return {
+      ...summary(event),
+      members: event.members,
+      isOwner: !guest,
+      ...(guest && { guestMemberId: guest.memberId }),
+    };
   }
 
   if ((m = path.match(/^\/api\/events\/([^/]+)\/invite-link$/))) {
@@ -276,7 +387,7 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
     const event = findEvent(m[1]);
     const expenseId = m[2];
     if (method === "GET" && !expenseId) {
-      return store.expenses.filter((e) => e.eventId === event.id);
+      return expensePage(event, query);
     }
     if (method === "DELETE") {
       store.expenses = store.expenses.filter((e) => String(e.id) !== expenseId);
@@ -318,6 +429,19 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
   }
 
   // Invitaciones
+  if ((m = path.match(/^\/api\/invite-links\/([^/]+)\/guest-session$/))) {
+    if (decodeURIComponent(m[1]) !== INVITE_TOKEN) {
+      throw new ApiError(404, "No encontramos este evento.");
+    }
+    const event = store.events.find((e) => e.id === 1)!;
+    const member = event.members.find((x) => x.id === Number(body.memberId));
+    if (!member) throw new ApiError(404, "No encontramos este integrante.");
+    if (!member.isGuest) throw new ApiError(409, "Ese integrante ya tiene cuenta.");
+    const guest: Guest = { type: "guest", eventId: event.id, memberId: member.id, name: member.name };
+    setSession(guest);
+    return guest;
+  }
+
   if ((m = path.match(/^\/api\/invitations\/([^/]+)(\/[a-z]+)?$/))) {
     if (decodeURIComponent(m[1]) !== INVITE_TOKEN) {
       throw new ApiError(404, "No encontramos este evento.");
@@ -329,13 +453,13 @@ function handle(method: string, path: string, query: URLSearchParams, body: Body
       return event.members.map((x) => ({
         id: x.id,
         name: x.name,
-        isLinked: esc === "sin-integrantes" ? true : !x.isGuest,
+        isLinked: esc.has("sin-integrantes") ? true : !x.isGuest,
       }));
     }
     if (suffix === "/access") {
       return {
         eventId: event.id,
-        linkedMember: esc === "ya-vinculado" ? { id: 2, name: "Francisco" } : null,
+        linkedMember: esc.has("ya-vinculado") ? { id: 2, name: "Francisco" } : null,
       };
     }
     if (suffix === "/link") {
